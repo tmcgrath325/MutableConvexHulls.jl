@@ -3,6 +3,9 @@ uuid = "948c7aac-0e5e-4631-af23-7a6bb7a17825"
 authors = ["Tom McGrath <tmcgrath325@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+PairedLinkedLists = "7a42b37b-ed3b-477a-9848-3661f53bb718"
+
 [compat]
 julia = "1"
 
