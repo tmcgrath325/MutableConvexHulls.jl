@@ -3,7 +3,8 @@ module MutableConvexHulls
 using PairedLinkedLists
 
 include("monotonechain.jl")
+include("jarvismarch.jl")
 
-export lower_hull, upper_hull, convex_hull
+export lower_monotonechain, upper_monotonechain, convex_monotonechain
 
 end

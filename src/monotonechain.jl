@@ -1,13 +1,10 @@
-# cross product of 2D vectors OA and OB
-cross(o, a, b) = (a[1] - o[1]) * (b[2] - o[2]) - (a[2] - o[2]) * (b[1] - o[1])
-
 """
-lh = lower_grahamscan(list::PairedLinkedList)
+lh = lower_monotonechain(list::PairedLinkedList)
 
 Return the lower convex hull of the points contained in the provided `list`. Each node in the list should contain
 a two-dimensional point, and the nodes are assumed to be sorted (e.g. by lowest "x" value and by lowest "y" in case of ties).
 """
-function lower_grahamscan(pointsList::PairedLinkedList{T}) where T
+function lower_monotonechain(pointsList::PairedLinkedList{T}) where T
     # initialize the lower convex hull
     lower = PairedLinkedList{T}(pointsList)
     pointsList.partner = lower
@@ -19,7 +16,7 @@ function lower_grahamscan(pointsList::PairedLinkedList{T}) where T
     pointsNode = pointsList.head
     for i=1:pointsList.len
         pointsNode = pointsNode.next
-        while length(lower) >= 2 && cross(lower.node.prev.prev.data, lower.node.prev.data, pointsNode.data) <= 0
+        while length(lower) >= 2 && cross2d(lower.node.prev.data .- lower.node.prev.prev.data, pointsNode.data .- lower.node.prev.prev.data) <= 0
             pop!(lower)
         end
         push!(lower, pointsNode.data)
@@ -30,12 +27,12 @@ function lower_grahamscan(pointsList::PairedLinkedList{T}) where T
 end
 
 """
-lh = lower_grahamscan(list::PairedLinkedList)
+lh = lower_monotonechain(list::PairedLinkedList)
 
 Return the lower convex hull of the points contained in the provided `list`. Each node in the list should contain
 a two-dimensional point, and the nodes are assumed to be sorted (e.g. by lowest "x" value and by lowest "y" in case of ties).
 """
-function upper_grahamscan(pointsList::PairedLinkedList{T}) where T
+function upper_monotonechain(pointsList::PairedLinkedList{T}) where T
     # initialize the lower convex hull
     upper = PairedLinkedList{T}(pointsList)
     pointsList.partner = upper
@@ -46,7 +43,7 @@ function upper_grahamscan(pointsList::PairedLinkedList{T}) where T
     # perform monotone chain algorithm
     for i=1:pointsList.len
         pointsNode = pointsNode.prev
-        while length(upper) >= 2 && cross(upper.node.prev.prev.data, upper.node.prev.data, pointsNode.data) <= 0
+        while length(upper) >= 2 && cross2d(upper.node.prev.data .- upper.node.prev.prev.data, pointsNode.data .- upper.node.prev.prev.data) <= 0
             pop!(upper)
         end
         push!(upper, pointsNode.data)
@@ -57,12 +54,12 @@ function upper_grahamscan(pointsList::PairedLinkedList{T}) where T
 end
 
 """
-h = grahamscan(list::PairedLinkedList)
+h = monotonechain(list::PairedLinkedList)
 
 Return the convex hull of the points contained in the provided `list`. Each node in the list should contain
 a two-dimensional point, and the nodes are assumed to be sorted (e.g. by lowest "x" value and by lowest "y" in case of ties).
 """
-function grahamscan(pointsList::PairedLinkedList{T}) where T
+function monotonechain(pointsList::PairedLinkedList{T}) where T
     # obtain upper and lower hulls
     upper = upper_hull(pointsList)
     lower = lower_hull(pointsList)
