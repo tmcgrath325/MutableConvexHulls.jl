@@ -2,7 +2,7 @@ using MutableConvexHulls
 using PairedLinkedLists
 using Test
 
-tests = ["turns",
+tests = ["orientation",
          "monotonechain",
          "jarvismarch",
         ]
