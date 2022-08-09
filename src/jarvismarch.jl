@@ -23,9 +23,15 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
     betterturn(args...) = colinear ? closer_turn(!orientation, args...) : further_turn(!orientation, args...)
 
     # perform jarvis march 
-    current = hull.tail.prev.partner
-    firstpoint = pointslist.head.next
+    counter = 0
+    firstpoint = hull.tail.prev.partner
+    current = firstpoint
     while length(hull) < 1 || current !== first(hull)
+        if counter > length(pointslist)
+            throw(ErrorException("More points were added to the hull than exist in the provided list of points."))
+        end
+        counter += 1
+
         next = firstpoint === current ? firstpoint.next : firstpoint # avoid checking identical points
         for target in IteratingListNodes(pointslist)
             if target.data != current.data

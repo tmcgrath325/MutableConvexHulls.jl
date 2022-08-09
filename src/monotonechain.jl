@@ -12,7 +12,7 @@ function lower_monotonechain!(pointslist::PairedLinkedList{T}, lower::Union{Pair
         addpartner!(pointslist, lower)
     end
     # exclude or include colinear points on the hull
-    wrongturn(args...) = colinear ? !oriented_turn(orientation, args...) : !aligned_turn(orientation, args...)
+    wrongturn(args...) = colinear ? !oriented_turn(orientation, args...) : !closer_turn(orientation, args...)
     # perform monotone chain algorithm
     len = 0
     for node in IteratingListNodes(pointslist; rev=(orientation===CW))
@@ -43,7 +43,7 @@ function upper_monotonechain!(pointslist::PairedLinkedList{T}, upper::Union{Pair
         addpartner!(pointslist, upper)
     end
     # exclude or include colinear points on the hull
-    wrongturn(args...) = colinear ? !oriented_turn(orientation, args...) : !aligned_turn(orientation, args...)
+    wrongturn(args...) = colinear ? !oriented_turn(orientation, args...) : !closer_turn(orientation, args...)
     # perform monotone chain algorithm
     len = 0
     for node in IteratingListNodes(pointslist; rev=(orientation===CCW))
