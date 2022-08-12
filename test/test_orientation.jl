@@ -1,4 +1,4 @@
-using MutableConvexHulls: oriented_turn, aligned_turn, closer_turn, further_turn
+using MutableConvexHulls: isorientedturn, isalignedturn, iscloserturn, isfurtherturn, isaligned, cross2d
 
 @testset "orientation" begin
     # set up a simple grid of coordinates for testing
@@ -10,12 +10,12 @@ using MutableConvexHulls: oriented_turn, aligned_turn, closer_turn, further_turn
         for o in boxcoords
             for a in boxcoords
                 for b in boxcoords
-                    left_result = oriented_turn(CCW, o, a, b)
-                    right_result = oriented_turn(CW, o, a, b)
+                    left_result = isorientedturn(CCW, o, a, b)
+                    right_result = isorientedturn(CW, o, a, b)
                     oa = a .- o
                     ob = b .- o
-                    @test left_result == oriented_turn(CCW, oa, ob)
-                    @test right_result == oriented_turn(CW, oa, ob)
+                    @test left_result == isorientedturn(CCW, oa, ob)
+                    @test right_result == isorientedturn(CW, oa, ob)
                     angle1 = atan(oa[2], oa[1])
                     angle2 = atan(ob[2], ob[1])
                     anglediff = wrapangle(angle2 - angle1)
@@ -35,12 +35,12 @@ using MutableConvexHulls: oriented_turn, aligned_turn, closer_turn, further_turn
         for o in boxcoords
             for a in boxcoords
                 for b in boxcoords
-                    left_result = aligned_turn(CCW, o, a, b)
-                    right_result = aligned_turn(CW, o, a, b)
+                    left_result = isalignedturn(CCW, o, a, b)
+                    right_result = isalignedturn(CW, o, a, b)
                     oa = a .- o
                     ob = b .- o
-                    @test left_result == aligned_turn(CCW, oa, ob)
-                    @test right_result == aligned_turn(CW, oa, ob)
+                    @test left_result == isalignedturn(CCW, oa, ob)
+                    @test right_result == isalignedturn(CW, oa, ob)
                     angle1 = atan(oa[2], oa[1])
                     angle2 = atan(ob[2], ob[1])
                     anglediff = wrapangle(angle2 - angle1)
@@ -59,33 +59,47 @@ using MutableConvexHulls: oriented_turn, aligned_turn, closer_turn, further_turn
     end
 
     @testset "closer/further" begin
+        prevdirections = filter(x->x!=(0,0), [(i,j) for i in (-1,0,1) for j in (-1,0,1)])
         for o in boxcoords
             for a in boxcoords
                 for b in boxcoords
-                    closer_left_result = closer_turn(CCW, o, a, b)
-                    closer_right_result = closer_turn(CW, o, a, b)
-                    further_left_result = further_turn(CCW, o, a, b)
-                    further_right_result = further_turn(CW, o, a, b)
-                    oa = a .- o
-                    ob = b .- o
-                    @test closer_left_result == closer_turn(CCW, oa, ob)
-                    @test closer_right_result == closer_turn(CW, oa, ob)
-                    @test further_left_result == further_turn(CCW, oa, ob)
-                    @test further_right_result == further_turn(CW, oa, ob)
-                    angle1 = atan(oa[2], oa[1])
-                    angle2 = atan(ob[2], ob[1])
-                    anglediff = wrapangle(angle2 - angle1)
-                    if sum(abs2, oa) == 0 || sum(abs2, ob) == 0 || abs(anglediff) ≈ π
-                        @test !closer_left_result && !closer_right_result && !further_left_result && !further_right_result
-                    elseif abs(anglediff) ≈ 0
-                        lensq1 = sum(abs2, oa)
-                        lensq2 = sum(abs2, ob)
-                        @test lensq1 > lensq2 ? (closer_left_result && closer_right_result) : (!closer_left_result && !closer_right_result)
-                        @test lensq2 > lensq1 ? (further_left_result && further_right_result) : (!further_left_result && !further_right_result)
-                    else 
-                        @test closer_left_result == further_left_result == (wrapangle(anglediff) > 0)
-                        @test closer_right_result == further_right_result == (wrapangle(anglediff) < 0)
-                        @test closer_left_result != closer_right_result
+                    for prev in prevdirections
+                        closer_left_result = iscloserturn(CCW, prev, o, a, b)
+                        closer_right_result = iscloserturn(CW, prev, o, a, b)
+                        further_left_result = isfurtherturn(CCW, prev, o, a, b)
+                        further_right_result = isfurtherturn(CW, prev, o, a, b)
+                        oa = a .- o
+                        ob = b .- o
+                        @test closer_left_result == iscloserturn(CCW, prev, oa, ob)
+                        @test closer_right_result == iscloserturn(CW, prev, oa, ob)
+                        @test further_left_result == isfurtherturn(CCW, prev, oa, ob)
+                        @test further_right_result == isfurtherturn(CW, prev, oa, ob)
+                        angle1 = atan(oa[2], oa[1])
+                        angle2 = atan(ob[2], ob[1])
+                        anglediff = wrapangle(angle2 - angle1)
+                        if sum(abs2, oa) == 0 
+                            @test closer_left_result && closer_right_result && further_left_result && further_right_result
+                        elseif sum(abs2, ob) == 0
+                            @test !closer_left_result && !closer_right_result && !further_left_result && !further_right_result
+                        elseif abs(anglediff) ≈ π
+                            if cross2d(prev, oa) == 0
+                                @test closer_left_result == further_left_result == closer_right_result == further_right_result == !isaligned(prev, oa)
+                            else
+                                @test closer_left_result == further_left_result == isorientedturn(CCW, prev, ob)
+                                @test closer_right_result == further_right_result == isorientedturn(CW, prev, ob)
+                            end
+                            # @show prev, oa, ob
+                            # sleep(0.1)
+                        elseif abs(anglediff) ≈ 0
+                            lensq1 = sum(abs2, oa)
+                            lensq2 = sum(abs2, ob)
+                            @test lensq1 > lensq2 ? (closer_left_result && closer_right_result) : (!closer_left_result && !closer_right_result)
+                            @test lensq2 > lensq1 ? (further_left_result && further_right_result) : (!further_left_result && !further_right_result)
+                        else 
+                            @test closer_left_result == further_left_result == (wrapangle(anglediff) > 0)
+                            @test closer_right_result == further_right_result == (wrapangle(anglediff) < 0)
+                            @test closer_left_result != closer_right_result
+                        end
                     end
                 end
             end

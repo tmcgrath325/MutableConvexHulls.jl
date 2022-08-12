@@ -1,11 +1,11 @@
 function jarvis_binary_search(query::AbstractListNode, hull::AbstractConvexHull)
     # if the query explicitly belongs to the hull, we already know the appropriate next point
     query.list === hullpointslist && return (PairedLinkedLists.at_tail(query.next) ? pointslist.head.next : query.next)
-    return jarvis_binary_search(query, hull.hull, hull.colinear, hull.orientation)
+    return jarvis_binary_search(query, hull.hull, hull.collinear, hull.orientation)
 end
 
-function jarvis_binary_search(query::AbstractListNode, hullpointslist::AbstractLinkedList, colinear::Bool = false, orientation::HullOrientation = CCW)  
-    betterturn(args...) = colinear ? closer_turn(!orientation, args...) : further_turn(!orientation, args...)
+function jarvis_binary_search(query::AbstractListNode, hullpointslist::AbstractLinkedList, collinear::Bool = false, orientation::HullOrientation = CCW)  
+    betterturn(args...) = collinear ? closer_turn(!orientation, args...) : further_turn(!orientation, args...)
     return jarvis_binary_search(query, hullpointslist, betterturn)
 end
 

@@ -1,17 +1,18 @@
-function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedList{T},Nothing}=nothing, stop::Union{PairedListNode{T},Nothing}=nothing; orientation::HullOrientation=CCW, colinear::Bool=false) where T
+function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedList{T},Nothing}=nothing, stop::Union{PairedListNode{T},Nothing}=nothing, initedge=DOWN; orientation::HullOrientation=CCW, collinear::Bool=false, by::Function=identity) where T
     if isnothing(hull)
         # initialize the convex hull
         hull = PairedLinkedList{T}()
         addpartner!(pointslist, hull)
     end
 
-    # handle the 0- and 1-point cases
+    # handle the 0- and 1- lopoint cases
     length(pointslist) == 1 && push!(hull, first(pointslist))
     length(pointslist) <= 1 && return hull
 
     if isempty(hull)
         # add first point on the hull
-        firstnode = getnode(pointslist, orientation === CCW ? argmin(pointslist) : argmax(pointslist))
+        f = node -> by(node.data)
+        firstnode = orientation === CCW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
         push!(hull, firstnode.data)
         addpartner!(hull.head.next, firstnode)
     end
@@ -20,12 +21,13 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
     end
 
     # use the appropriate check for determining a better option for the next point
-    betterturn(args...) = colinear ? closer_turn(!orientation, args...) : further_turn(!orientation, args...)
+    betterturn(args...) = collinear ? iscloserturn(!orientation, args...) : isfurtherturn(!orientation, args...)
 
     # perform jarvis march 
     counter = 0
-    firstpoint = hull.tail.prev.partner
-    current = firstpoint
+    firstpoint = pointslist.head.next
+    current = hull.tail.prev.partner
+    prevedge = initedge
     while length(hull) < 1 || current !== first(hull)
         if counter > length(pointslist)
             throw(ErrorException("More points were added to the hull than exist in the provided list of points."))
@@ -36,7 +38,7 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
         for target in IteratingListNodes(pointslist)
             if target.data != current.data
                 # update the next node if it presents a better turn
-                if betterturn(current.data, next.data, target.data)
+                if betterturn(prevedge, current.data, next.data, target.data)
                     next = target
                 end
             end
@@ -51,13 +53,14 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
         # add the next node to the hull
         push!(hull, next.data)
         addpartner!(hull.tail.prev, next)
+        prevedge = next.data .- current.data
         current = next
     end
 
     return hull
 end
 
-function lower_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOrientation=CCW, colinear::Bool=false) where T
+function lower_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOrientation=CCW, collinear::Bool=false, by::Function=identity) where T
     # initialize the hull
     hull = PairedLinkedList{T}()
     addpartner!(pointslist, hull)
@@ -67,13 +70,14 @@ function lower_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOr
     length(pointslist) <= 1 && return hull
 
     # select the appropriate starting and stopping nodes
-    firstnode = getnode(pointslist, orientation === CCW ? argmin(pointslist) : argmax(pointslist))
-    stop = getnode(pointslist, orientation === CW ? argmin(pointslist) : argmax(pointslist))
+    f = node -> by(node.data)
+    firstnode = orientation === CCW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
+    stop = orientation === CW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
     push!(hull, firstnode.data)
     addpartner!(hull.head.next, firstnode)
 
     # populate the hull via jarvis march
-    jarvismarch!(pointslist, hull, stop; orientation=orientation, colinear=colinear)
+    jarvismarch!(pointslist, hull, stop, DOWN; orientation=orientation, collinear=collinear, by=by)
 
     # add the last node
     push!(hull, stop.data)
@@ -82,7 +86,7 @@ function lower_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOr
     return hull
 end
 
-function upper_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOrientation=CCW, colinear::Bool=false) where T
+function upper_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOrientation=CCW, collinear::Bool=false, by::Function=identity) where T
     # initialize the hull
     hull = PairedLinkedList{T}()
     addpartner!(pointslist, hull)
@@ -92,13 +96,14 @@ function upper_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOr
     length(pointslist) <= 1 && return hull
 
     # select the appropriate starting and stopping nodes
-    firstnode = getnode(pointslist, orientation === CW ? argmin(pointslist) : argmax(pointslist))
-    stop = getnode(pointslist, orientation === CCW ? argmin(pointslist) : argmax(pointslist))
+    f = node -> by(node.data)
+    firstnode = orientation === CW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
+    stop = orientation === CCW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
     push!(hull, firstnode.data)
     addpartner!(hull.head.next, firstnode)
 
     # populate the hull via jarvis march
-    jarvismarch!(pointslist, hull, stop; orientation=orientation, colinear=colinear)
+    jarvismarch!(pointslist, hull, stop, UP; orientation=orientation, collinear=collinear, by=by)
 
     # add the last node
     push!(hull, stop.data)
@@ -107,20 +112,20 @@ function upper_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOr
     return hull
 end
 
-function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, colinear::Bool=false) where T
+function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, kwargs...) where T
     pointslist = PairedLinkedList{T}(points...)
-    hull = jarvismarch!(pointslist; orientation=orientation, colinear=colinear)
-    return MutableConvexHull{T}(hull, orientation, colinear)
+    hull = jarvismarch!(pointslist; orientation=orientation, collinear=collinear, kwargs...)
+    return MutableConvexHull{T}(hull, orientation, collinear)
 end
 
-function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, colinear::Bool=false) where T
+function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, kwargs...) where T
     pointslist = PairedLinkedList{T}(points...)
-    hull = lower_jarvismarch!(pointslist; orientation=orientation, colinear=colinear)
-    return MutableLowerConvexHull{T}(hull, orientation, colinear)
+    hull = lower_jarvismarch!(pointslist; orientation=orientation, collinear=collinear, kwargs...)
+    return MutableLowerConvexHull{T}(hull, orientation, collinear)
 end
 
-function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, colinear::Bool=false) where T
+function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, kwargs...) where T
     pointslist = PairedLinkedList{T}(points...)
-    hull = upper_jarvismarch!(pointslist; orientation=orientation, colinear=colinear)
-    return MutableUpperConvexHull{T}(hull, orientation, colinear)
+    hull = upper_jarvismarch!(pointslist; orientation=orientation, collinear=collinear, kwargs...)
+    return MutableUpperConvexHull{T}(hull, orientation, collinear)
 end
