@@ -1,3 +1,17 @@
+function jarvissearch(query::AbstractListNode{T}, prevedge, pointsnodes, betterturn::Function) where T
+    firstpoint = first(pointsnodes)
+    next = firstpoint === query ? firstpoint.next : firstpoint # avoid checking identical points
+    for target in pointsnodes
+        if target.data != query.data
+            # update the next node if it presents a better turn
+            if betterturn(prevedge, query.data, next.data, target.data)
+                next = target
+            end
+        end
+    end
+    return next
+end
+
 function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedList{T},Nothing}=nothing, stop::Union{PairedListNode{T},Nothing}=nothing, initedge=DOWN; orientation::HullOrientation=CCW, collinear::Bool=false, by::Function=identity) where T
     if isnothing(hull)
         # initialize the convex hull
@@ -25,24 +39,14 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
 
     # perform jarvis march 
     counter = 0
-    firstpoint = pointslist.head.next
     current = hull.tail.prev.partner
     prevedge = initedge
-    while length(hull) < 1 || current !== first(hull)
+    while counter == 0 || current !== stop.partner
         if counter > length(pointslist)
             throw(ErrorException("More points were added to the hull than exist in the provided list of points."))
         end
         counter += 1
-
-        next = firstpoint === current ? firstpoint.next : firstpoint # avoid checking identical points
-        for target in IteratingListNodes(pointslist)
-            if target.data != current.data
-                # update the next node if it presents a better turn
-                if betterturn(prevedge, current.data, next.data, target.data)
-                    next = target
-                end
-            end
-        end
+        next = jarvissearch(current, prevedge, IteratingListNodes(pointslist), betterturn)
         if current == next
             throw(ErrorException("Jarvis March failed to progress."))
         end
