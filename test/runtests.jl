@@ -5,6 +5,7 @@ using Test
 tests = ["orientation",
          "monotonechain",
          "jarvismarch",
+         "inside",
         ]
 
 @testset "MutableConvexHulls" begin
