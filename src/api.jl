@@ -39,22 +39,8 @@ end
 Base.length(h::AbstractConvexHull) = length(h.hull)
 
 function Base.copy(h::H) where {T,H<:AbstractConvexHull{T}}
-    hcopy = H(h.orientation, h.collinear)
-    pointslist = hcopy.hull.partner
-    hulltargets = TargetedLinkedList(pointslist)
-    for pointsnode in IteratingListNodes(h.hull.partner)
-        push!(pointslist, pointsnode.data)
-        if haspartner(pointsnode) 
-            push!(hulltargets, pointsnode.data)
-            addpartner!(hulltargets.tail.prev, pointslist.tail.prev)
-        end
-    end
-    for hullnode in IteratingListNodes(h.hull)
-        push!(hcopy.hull, hullnode.data)
-        targetingnode = first(Iterators.filter(x->x.data == hullnode.data, IteratingListNodes(hulltargets)))
-        addpartner!(hcopy.hull.tail.prev, targetingnode.partner)
-    end
-    return hcopy
+    copiedhull = copy(h.hull)
+    return H(copiedhull, h.orientation, h.collinear)
 end
 
 struct PointNode{T<:AbstractListNode}

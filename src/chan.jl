@@ -127,7 +127,7 @@ function mergehulls(h::H, others::H...; orientation::HullOrientation=h.orientati
         nextnode = pointnodes[hullidx]
         push!(newpoints, nextnode.data)
         if haspartner(nextnode)
-            targetingnode = first(Iterators.filter(x->x.data == nextnode.data, IteratingListNodes(hulltargets[hullidx])))
+            targetingnode = getfirst(x->x.data == nextnode.data, IteratingListNodes(hulltargets[hullidx]))
             addpartner!(targetingnode, newpoints.tail.prev)
         end
         pointnodes[hullidx] = reversehulls[hullidx] ? pointnodes[hullidx].prev : pointnodes[hullidx].next
