@@ -20,7 +20,7 @@ function isalignedfurther(orientation,prevedge, oa, ob)
         return dot_oa_ob > dot2d(oa, oa)    # return true if OB is longer
     else
         cp_prev_ob = cross2d(prevedge, ob)
-        if cp_prev_ob === 0                 # if the previous edge, OA, and OB are all collinear, but OA and OB are not aligned,
+        if cp_prev_ob == 0                  # if the previous edge, OA, and OB are all collinear, but OA and OB are not aligned,
             return isaligned(prevedge, ob)  # return true OB if it is aligned with the previous edge
         else                                                    # otherwise 
             return isorientedturn(orientation, prevedge, ob)    # return true if OB results in the proper orientation
@@ -35,7 +35,7 @@ function isalignedcloser(orientation,prevedge, oa, ob)
         return dot2d(oa, oa) > dot_oa_ob    # return true if OB is shorter
     else
         cp_prev_ob = cross2d(prevedge, ob)
-        if cp_prev_ob === 0                 # if the previous edge, OA, and OB are all collinear, but OA and OB are not aligned,
+        if cp_prev_ob == 0                  # if the previous edge, OA, and OB are all collinear, but OA and OB are not aligned,
             return isaligned(prevedge, ob)  # return true OB if it is aligned with the previous edge
         else                                                    # otherwise 
             return isorientedturn(orientation, prevedge, ob)    # return true if OB results in the proper orientation

@@ -15,5 +15,6 @@ export monotonechain, lower_monotonechain, upper_monotonechain
 export jarvismarch, lower_jarvismarch, upper_jarvismarch
 export CCW, CW
 export insidehull
+export mergehulls
 
 end
