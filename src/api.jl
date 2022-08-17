@@ -4,33 +4,30 @@ struct MutableConvexHull{T} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
-    sortedby::Union{Nothing, Function}
 end
-function MutableConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Nothing,Function}=nothing) where T
+function MutableConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false) where T
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableConvexHull{T}(hull, orientation, collinear, sortedby)
+    return MutableConvexHull{T}(hull, orientation, collinear)
 end
 
 struct MutableLowerConvexHull{T} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
-    sortedby::Union{Nothing, Function}
 end
-function MutableLowerConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Nothing,Function}=nothing) where T
+function MutableLowerConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false) where T
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableLowerConvexHull{T}(hull, orientation, collinear, sortedby)
+    return MutableLowerConvexHull{T}(hull, orientation, collinear)
 end
 
 struct MutableUpperConvexHull{T} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
-    sortedby::Union{Nothing, Function}
 end
 function MutableUpperConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false) where T
     pointslist = PairedLinkedList{T}()
