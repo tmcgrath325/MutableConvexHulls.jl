@@ -19,8 +19,11 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
         addpartner!(pointslist, hull)
     end
 
-    # handle the 0- and 1- lopoint cases
-    length(pointslist) == 1 && push!(hull, first(pointslist))
+    # handle the 0- and 1- point cases
+    if length(pointslist) == 1 
+        push!(hull, first(pointslist))
+        addpartner!(tail(hull), head(pointslist))
+    end
     length(pointslist) <= 1 && return hull
 
     if isempty(hull)
@@ -28,10 +31,10 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
         f = node -> by(node.data)
         firstnode = orientation === CCW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
         push!(hull, firstnode.data)
-        addpartner!(hull.head.next, firstnode)
+        addpartner!(head(hull), firstnode)
     end
     if isnothing(stop)
-        stop = hull.head.next
+        stop = head(hull)
     end
 
     # use the appropriate check for determining a better option for the next point
@@ -39,7 +42,7 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
 
     # perform jarvis march 
     counter = 0
-    current = hull.tail.prev.partner
+    current = tail(hull).partner
     prevedge = initedge
     while counter == 0 || current !== stop.partner
         if counter > length(pointslist)
@@ -56,7 +59,7 @@ function jarvismarch!(pointslist::PairedLinkedList{T}, hull::Union{PairedLinkedL
         end
         # add the next node to the hull
         push!(hull, next.data)
-        addpartner!(hull.tail.prev, next)
+        addpartner!(tail(hull), next)
         prevedge = next.data .- current.data
         current = next
     end
@@ -78,14 +81,14 @@ function lower_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOr
     firstnode = orientation === CCW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
     stop = orientation === CW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
     push!(hull, firstnode.data)
-    addpartner!(hull.head.next, firstnode)
+    addpartner!(head(hull), firstnode)
 
     # populate the hull via jarvis march
     jarvismarch!(pointslist, hull, stop, DOWN; orientation=orientation, collinear=collinear, by=by)
 
     # add the last node
     push!(hull, stop.data)
-    addpartner!(hull.tail.prev, stop)
+    addpartner!(tail(hull), stop)
 
     return hull
 end
@@ -104,14 +107,14 @@ function upper_jarvismarch!(pointslist::PairedLinkedList{T}; orientation::HullOr
     firstnode = orientation === CW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
     stop = orientation === CCW ? argmin(f, IteratingListNodes(pointslist)) : argmax(f, IteratingListNodes(pointslist))
     push!(hull, firstnode.data)
-    addpartner!(hull.head.next, firstnode)
+    addpartner!(head(hull), firstnode)
 
     # populate the hull via jarvis march
     jarvismarch!(pointslist, hull, stop, UP; orientation=orientation, collinear=collinear, by=by)
 
     # add the last node
     push!(hull, stop.data)
-    addpartner!(hull.tail.prev, stop)
+    addpartner!(tail(hull), stop)
 
     return hull
 end

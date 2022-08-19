@@ -16,13 +16,13 @@ function lower_monotonechain!(pointslist::PairedLinkedList{T}, lower::Union{Pair
     # perform monotone chain algorithm
     len = 0
     for node in IteratingListNodes(pointslist; rev=(orientation===CW))
-        while len >= 2 && wrongturn(lower.tail.prev.prev.data, lower.tail.prev.data, node.data)
+        while len >= 2 && wrongturn(tail(lower).prev.data, tail(lower).data, node.data)
             pop!(lower)
             len -= 1
         end
         push!(lower, node.data)
         if !haspartner(node) # avoid overwriting the partners for points already on the hull
-            addpartner!(lower.tail.prev, node)
+            addpartner!(tail(lower), node)
         end
         len += 1
     end
@@ -47,13 +47,13 @@ function upper_monotonechain!(pointslist::PairedLinkedList{T}, upper::Union{Pair
     # perform monotone chain algorithm
     len = 0
     for node in IteratingListNodes(pointslist; rev=(orientation===CCW))
-        while len >= 2 && wrongturn(upper.tail.prev.prev.data, upper.tail.prev.data, node.data)
+        while len >= 2 && wrongturn(tail(upper).prev.data, tail(upper).data, node.data)
             pop!(upper)
             len -= 1
         end
         push!(upper, node.data)
         if !haspartner(node) # avoid overwriting the partners for points already on the hull
-            addpartner!(upper.tail.prev, node)
+            addpartner!(tail(upper), node)
         end
         len += 1
     end
@@ -72,21 +72,24 @@ function monotonechain!(pointslist::PairedLinkedList{T}; kwargs...) where T
     hull = PairedLinkedList{T}()
     addpartner!(pointslist, hull)
     # handle the 0- and 1-point cases
-    length(pointslist) == 1 && push!(hull, first(pointslist))
+    if length(pointslist) == 1
+        push!(hull, first(pointslist))
+        addpartner!(tail(hull), head(pointslist))
+    end
     length(pointslist) <= 1 && return hull
 
     # obtain the lower convex hull
     hull = lower_monotonechain!(pointslist, hull; kwargs...)
     pop!(hull) # remove the last point to avoid duplication (will also be the first point in the upper hull)
-    second_from_right = hull.tail.prev
+    second_from_right = tail(hull)
 
     # obtain the upper convex hull
     hull = upper_monotonechain!(pointslist, hull; kwargs...)
     pop!(hull) # remove the last point to avoid duplication (is also be the first point in the lower hull)
 
     # re-add partners for the popped nodes
-    addpartner!(pointslist.head.next, hull.head.next)
-    addpartner!(pointslist.tail.prev, second_from_right.next)
+    addpartner!(head(pointslist), head(hull))
+    addpartner!(tail(pointslist), second_from_right.next)
     return hull
 end
 
