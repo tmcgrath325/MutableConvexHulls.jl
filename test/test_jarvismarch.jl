@@ -16,12 +16,12 @@
         @test collect(lower_jarvismarch(boxcoords; orientation=CW, collinear=true).hull) == reverse(collect(lowercollinear.hull))
 
         # alternate-sorting coords
-        lower2 = lower_jarvismarch(boxcoords; by=by) # ; orientation = CCW, collinear = false
+        lower2 = lower_jarvismarch(boxcoords; sortedby=by) # ; orientation = CCW, collinear = false
         @test collect(lower2.hull) == [(first(boxcoords)[1], last(boxcoords)[2]), first(boxcoords), (last(boxcoords)[1], first(boxcoords)[2])] 
-        @test collect(lower_jarvismarch(boxcoords; orientation=CW, by=by).hull) == reverse(collect(lower2.hull))
-        lowercollinear2 = lower_jarvismarch(boxcoords; collinear=true, by=by)
+        @test collect(lower_jarvismarch(boxcoords; orientation=CW, sortedby=by).hull) == reverse(collect(lower2.hull))
+        lowercollinear2 = lower_jarvismarch(boxcoords; collinear=true, sortedby=by)
         @test collect(lowercollinear2.hull) == [[(first(jrange),i) for i in reverse(irange)]..., [(j,first(irange)) for j in jrange[2:end]]...] 
-        @test collect(lower_jarvismarch(boxcoords; orientation=CW, collinear=true, by=by).hull) == reverse(collect(lowercollinear2.hull))
+        @test collect(lower_jarvismarch(boxcoords; orientation=CW, collinear=true, sortedby=by).hull) == reverse(collect(lowercollinear2.hull))
     end
 
     @testset "Upper Jarvis March" begin
@@ -34,12 +34,12 @@
         @test collect(upper_jarvismarch(boxcoords; orientation=CW, collinear=true).hull) == reverse(collect(uppercollinear.hull))
 
         # alternate-sorting coords
-        upper2 = upper_jarvismarch(boxcoords; by=by) # ; orientation = CCW, collinear = false
+        upper2 = upper_jarvismarch(boxcoords; sortedby=by) # ; orientation = CCW, collinear = false
         @test collect(upper2.hull) == [(last(boxcoords)[1], first(boxcoords)[2]), last(boxcoords), (first(boxcoords)[1], last(boxcoords)[2])]
-        @test collect(upper_jarvismarch(boxcoords; orientation=CW, by=by).hull) == reverse(collect(upper2.hull))
-        uppercollinear2 = upper_jarvismarch(boxcoords; collinear=true, by=by)
+        @test collect(upper_jarvismarch(boxcoords; orientation=CW, sortedby=by).hull) == reverse(collect(upper2.hull))
+        uppercollinear2 = upper_jarvismarch(boxcoords; collinear=true, sortedby=by)
         @test collect(uppercollinear2.hull) == [[(last(jrange),i) for i in irange]..., [(j,last(irange)) for j in reverse(jrange)[2:end]]...]
-        @test collect(upper_jarvismarch(boxcoords; orientation=CW, collinear=true, by=by).hull) == reverse(collect(uppercollinear2.hull))
+        @test collect(upper_jarvismarch(boxcoords; orientation=CW, collinear=true, sortedby=by).hull) == reverse(collect(uppercollinear2.hull))
     end
 
     @testset "Full Jarvis March" begin
@@ -52,11 +52,11 @@
         @test collect(jarvismarch(boxcoords; orientation=CW, collinear=true).hull) == reverse(circshift(collect(hullcollinear.hull), Int(length(hullcollinear.hull)/2)-1))
 
         # alternate-sorting coords
-        hull2 = jarvismarch(boxcoords; by=by) # ; orientation = CCW, collinear = false
+        hull2 = jarvismarch(boxcoords; sortedby=by) # ; orientation = CCW, collinear = false
         @test collect(hull2.hull) == [(first(boxcoords)[1], last(boxcoords)[2]), first(boxcoords), (last(boxcoords)[1], first(boxcoords)[2]), last(boxcoords)]
-        @test collect(jarvismarch(boxcoords; orientation=CW, by=by).hull) == reverse(circshift(collect(hull2.hull),Int(length(hull2.hull)/2-1))) 
-        hullcollinear2 = jarvismarch(boxcoords; collinear=true, by=by)
+        @test collect(jarvismarch(boxcoords; orientation=CW, sortedby=by).hull) == reverse(circshift(collect(hull2.hull),Int(length(hull2.hull)/2-1))) 
+        hullcollinear2 = jarvismarch(boxcoords; collinear=true, sortedby=by)
         @test collect(hullcollinear2.hull) == [[(first(jrange),i) for i in reverse(irange)]..., [(j,first(irange)) for j in jrange[2:end]]..., [(last(jrange),i) for i in irange[2:end]]..., [(j,last(irange)) for j in reverse(jrange)[2:end-1]]...]
-        @test collect(jarvismarch(boxcoords; orientation=CW, collinear=true, by=by).hull) == reverse(circshift(collect(hullcollinear2.hull),Int(length(hullcollinear2.hull)/2-1))) 
+        @test collect(jarvismarch(boxcoords; orientation=CW, collinear=true, sortedby=by).hull) == reverse(circshift(collect(hullcollinear2.hull),Int(length(hullcollinear2.hull)/2-1))) 
     end
 end

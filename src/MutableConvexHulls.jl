@@ -11,6 +11,7 @@ include("inside.jl")
 include("chan.jl")
 
 export MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull
+export HullNode, PointNode, HullNodeIterator, PointNodeIterator, BracketedPointNodeIterator
 export monotonechain, lower_monotonechain, upper_monotonechain
 export jarvismarch, lower_jarvismarch, upper_jarvismarch
 export CCW, CW

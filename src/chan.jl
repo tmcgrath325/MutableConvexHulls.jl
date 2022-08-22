@@ -4,7 +4,7 @@ function jarvissortedsearch(query::AbstractListNode, prevedge, pointslist::Abstr
     head(pointslist).data == tail(pointslist).data && throw(ArgumentError("All points in the list are duplicates."))
 
     prev_worse = betterturn(prevedge, query.data, tail(pointslist).data, head(pointslist).data)
-    for target in IteratingListNodes(pointslist)
+    for target in ListNodeIterator(pointslist)
         if query.data == target.next.data
             continue
         end
@@ -128,22 +128,22 @@ function mergehulls(h::H, others::H...; orientation::HullOrientation=h.orientati
         nextnode = pointnodes[hullidx]
         push!(newpoints, nextnode.data)
         if haspartner(nextnode)
-            targetingnode = getfirst(x->x.data == nextnode.data, IteratingListNodes(hulltargets[hullidx]))
+            targetingnode = getfirst(x->x.data == nextnode.data, ListNodeIterator(hulltargets[hullidx]))
             addpartner!(targetingnode, tail(newpoints))
         end
         pointnodes[hullidx] = reversehulls[hullidx] ? pointnodes[hullidx].prev : pointnodes[hullidx].next
-        if reversehulls[hullidx] ? PairedLinkedLists.at_head(pointnodes[hullidx]) : PairedLinkedLists.at_tail(pointnodes[hullidx])
+        if reversehulls[hullidx] ? athead(pointnodes[hullidx]) : attail(pointnodes[hullidx])
             deleteidx = findfirst(x->x==hullidx, remaininghulls)
             deleteat!(remaininghulls, deleteidx)
         end
     end
     
     # determine starting and stopping points
-    start = argmin(f, map(x->argmin(f, IteratingListNodes(x)), hulltargets))
-    start = orientation === CCW ? argmin(f, map(x->argmin(f, IteratingListNodes(x)), hulltargets)) : argmax(f, map(x->argmax(f, IteratingListNodes(x)), hulltargets))
+    start = argmin(f, map(x->argmin(f, ListNodeIterator(x)), hulltargets))
+    start = orientation === CCW ? argmin(f, map(x->argmin(f, ListNodeIterator(x)), hulltargets)) : argmax(f, map(x->argmax(f, ListNodeIterator(x)), hulltargets))
     stop = start
     if H <: Union{MutableUpperConvexHull, MutableLowerConvexHull}
-        stop = orientation === CCW ? argmax(f, map(x->argmax(f, IteratingListNodes(x)), hulltargets)) : argmin(f, map(x->argmin(f, IteratingListNodes(x)), hulltargets))
+        stop = orientation === CCW ? argmax(f, map(x->argmax(f, ListNodeIterator(x)), hulltargets)) : argmin(f, map(x->argmin(f, ListNodeIterator(x)), hulltargets))
     end
 
     # add first point to hull
@@ -164,8 +164,8 @@ function mergehulls(h::H, others::H...; orientation::HullOrientation=h.orientati
         for (i, ht) in enumerate(hulltargets)
             candidates[i] = (current.list === ht && (collinear || !hulls[i].collinear)) ?       # If the current point belongs to the list being considered, we already know 
                 (reversehulls[i] ?                                                              # its candidate point as long as it doesn't contain extraneous collinear points
-                    (PairedLinkedLists.at_head(current.prev) ? tail(ht) : current.prev) : 
-                    (PairedLinkedLists.at_tail(current.next) ? head(ht) : current.next)) : 
+                    (athead(current.prev) ? tail(ht) : current.prev) : 
+                    (attail(current.next) ? head(ht) : current.next)) : 
                 jarvissortedsearch(current, prevedge, ht, betterturn)
         end
         next = jarvissearch(current, prevedge, candidates, betterturn)

@@ -1,4 +1,4 @@
-function insidehull(pointdata, h::MutableConvexHull)
+function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
     length(h) == 1 && return pointdata == h.head.next.data
 
     abovelower = false
@@ -35,7 +35,7 @@ function insidehull(pointdata, h::MutableConvexHull)
     return abovelower && belowupper
 end
 
-function insidehull(pointdata, h::MutableLowerConvexHull)
+function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
     length(h) == 1 && return pointdata == h.head.next.data
     abovelower = false
     ccw = h.orientation == CCW
@@ -52,7 +52,7 @@ function insidehull(pointdata, h::MutableLowerConvexHull)
     return abovelower
 end
 
-function insidehull(pointdata, h::MutableUpperConvexHull)
+function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
     length(h) == 1 && return pointdata == h.head.next.data
     belowupper = false
     ccw = h.orientation == CCW
@@ -67,3 +67,5 @@ function insidehull(pointdata, h::MutableUpperConvexHull)
     end
     return abovelower && belowupper
 end
+
+insidehull(pointnode::PairedListNode, h::AbstractConvexHull) = insidehull(pointnode.data, h)

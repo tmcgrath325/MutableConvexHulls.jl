@@ -1,70 +1,210 @@
 abstract type AbstractConvexHull{T} end
 
-struct MutableConvexHull{T} <: AbstractConvexHull{T}
+mutable struct MutableConvexHull{T} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
+    sortedby::Union{Function,Nothing}
 end
-function MutableConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false) where T
+function MutableConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Function,Nothing} = nothing) where T
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableConvexHull{T}(hull, orientation, collinear)
+    return MutableConvexHull{T}(hull, orientation, collinear, sortedby)
 end
 
-struct MutableLowerConvexHull{T} <: AbstractConvexHull{T}
+mutable struct MutableLowerConvexHull{T} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
+    sortedby::Union{Function,Nothing}
 end
-function MutableLowerConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false) where T
+function MutableLowerConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Function,Nothing} = nothing) where T
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableLowerConvexHull{T}(hull, orientation, collinear)
+    return MutableLowerConvexHull{T}(hull, orientation, collinear, sortedby)
 end
 
-struct MutableUpperConvexHull{T} <: AbstractConvexHull{T}
+mutable struct MutableUpperConvexHull{T} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
+    sortedby::Union{Function,Nothing}
 end
-function MutableUpperConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false) where T
+function MutableUpperConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Function,Nothing} = nothing) where T
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableUpperConvexHull{T}(hull, orientation, collinear)
+    return MutableUpperConvexHull{T}(hull, orientation, collinear, sortedby)
 end
 
+Base.isempty(h::AbstractConvexHull) = isempty(h.hull)
 Base.length(h::AbstractConvexHull) = length(h.hull)
+Base.eltype(h::AbstractConvexHull) = eltype(h.hull)
 
+Base.:(==)(h1::AbstractConvexHull, h2::AbstractConvexHull) = h1.hull == h2.hull
+
+function Base.copy!(h2::H, h::H) where {T,H<:AbstractConvexHull{T}}
+    copy!(h2.hull, h.hull)
+    h2.orientation = h.orientation
+    h2.collinear = h.collinear
+    h2.sortedby = h.sortedby
+    return h2
+end
 function Base.copy(h::H) where {T,H<:AbstractConvexHull{T}}
     copiedhull = copy(h.hull)
-    return H(copiedhull, h.orientation, h.collinear)
+    return H(copiedhull, h.orientation, h.collinear, h.sortedby)
 end
 
-struct PointNode{T<:AbstractListNode}
-    wrapped::T
+# function Base.reverse!(h::AbstractConvexHull)
+#     h.hull = reverse!(hull)
+#     h.orientation = !h.orientation
+#     h.sortedby = x -> -1 .* h.sortedby(x)
+#     return h
+# end
+# Base.reverse(h::AbstractConvexHull) = reverse!(copy(h))
+
+Base.empty!(h::AbstractConvexHull) = empty!(h.hull)
+Base.empty(h::AbstractConvexHull) = empty!(copy(h))
+
+# Iterating a convex hull returns the data contained in the nodes of its hull list
+Base.iterate(h::AbstractConvexHull) = iterate(h, h.hull.head.next)
+Base.iterate(h::AbstractConvexHull, node::PairedListNode) = iterate(h.hull, node)
+
+# these exist purely to attempt to prevent accidentally misuse of HullNodeIterator, PointNodeIterator, and BracketedPointNodeIterator
+struct PointNode{T}
+    wrapped::PairedListNode{T}
 end
-struct HullNode{T<:AbstractListNode}
-    wrapped::T
+struct HullNode{T}
+    wrapped::PairedListNode{T}
 end
 
-struct IteratingPointsListNodes{S<:AbstractListNode}
-    start::S
+
+struct HullNodeIterator{T}
+    start::HullNode{T}
     rev::Bool
-    function IteratingPointsListNodes(hull::AbstractConvexHull; rev::Bool = false)
-        return new{PairedLinkedLists.nodetype(hull.hull)}(hull.hull.partner.head.next, rev)
+end
+"""
+    HullNodeIterator(start [, rev])
+
+Returns an iterator over the nodes in the linked list representing the convex hull, starting at the specified node `start`.
+
+If `rev` is `true`, the iterator will advance toward the head of the list.
+Otherwise, it will advance toward the tail of the list.
+"""
+function HullNodeIterator(start::S; rev::Bool = false) where {T, S<:HullNode{T}}
+    return HullNodeIterator{T}(start, rev)
+end
+
+"""
+    HullNodeIterator(hull [, rev])
+
+Returns an iterator over the nodes in the linked list representing the convex hull.
+
+If `rev` is `true`, the iterator will start at the tail of the list and advance toward the head.
+Otherwise, it will start at the head of the list and advance toward the tail.
+"""
+HullNodeIterator(h::AbstractConvexHull{T}; rev::Bool = false) where T = HullNodeIterator(rev ? HullNode{T}(h.hull.tail.prev) : HullNode{T}(h.hull.head.next); rev = rev)
+
+Base.iterate(iter::HullNodeIterator) = iterate(iter, iter.start)
+Base.iterate(iter::HullNodeIterator{T}, node::S) where {T, S<:HullNode{T}} = iter.rev ? (athead(node.wrapped) ? nothing : (node.wrapped, HullNode{T}(node.wrapped.prev))) :
+                                                                                        (attail(node.wrapped) ? nothing : (node.wrapped, HullNode{T}(node.wrapped.next)))
+Base.IteratorSize(::HullNodeIterator) = Base.SizeUnknown()
+
+
+struct PointNodeIterator{T}
+    start::PointNode{T}
+    rev::Bool
+end
+"""
+    PointNodeIterator(start [, rev])
+
+Returns an iterator over the nodes in the linked list representing the points contained by the convex hull,
+starting at the specified node `start`.
+
+If `rev` is `true`, the iterator will advance toward the head of the list.
+Otherwise, it will advance toward the tail of the list.
+"""
+function PointNodeIterator(start::S; rev::Bool = false) where {T,S<:PointNode{T}}
+    return PointNodeIterator{T}(start, rev)
+end
+
+"""
+    PointNodeIterator(hull [, rev])
+
+Returns an iterator over the nodes in the linked list representing the points contained by the convex hull.
+
+If `rev` is `true`, the iterator will start at the tail of the list and advance toward the head.
+Otherwise, it will start at the head of the list and advance toward the tail.
+"""
+PointNodeIterator(h::AbstractConvexHull{T}; rev::Bool = false) where T = PointNodeIterator(rev ? PointNode{T}(h.hull.partner.tail.prev) : PointNode{T}(h.hull.partner.head.next); rev = rev)
+
+Base.iterate(iter::PointNodeIterator) = iterate(iter, iter.start)
+Base.iterate(iter::PointNodeIterator{T}, node::S) where {T, S<:PointNode{T}} = iter.rev ? (athead(node.wrapped) ? nothing : (node.wrapped, PointNode{T}(node.wrapped.prev))) :
+                                                                                          (attail(node.wrapped) ? nothing : (node.wrapped, PointNode{T}(node.wrapped.next)))
+Base.IteratorSize(::PointNodeIterator) = Base.SizeUnknown()
+
+
+struct BracketedIteratorState{T}
+    node::PointNode{T}
+    finished::Bool
+end
+
+struct BracketedPointNodeIterator{T}
+    start::PointNode{T}
+    hullstart::HullNode{T}
+    hullend::HullNode{T}
+    rev::Bool
+end
+function BracketedPointNodeIterator(start::PointNode{T}, hullstart::HullNode{T}, hullend::HullNode{T}; rev::Bool = false) where T
+    hullstart.wrapped.list !== hullend.wrapped.list && throw(ArgumentError("The hull nodes must belong to the same convex hull"))
+    start.wrapped.list.partner !== hullstart.wrapped.list && throw(ArgumentError("The starting point node must belong to the same convex hull as the hull points"))
+    return BracketedPointNodeIterator{T}(start, hullstart, hullend, rev)
+end
+
+Base.iterate(iter::BracketedPointNodeIterator{T}) where T = iterate(iter, BracketedIteratorState{T}(iter.start, iter.start.wrapped.list.len == 0))
+function Base.iterate(iter::BracketedPointNodeIterator{T}, state::BracketedIteratorState{T}) where T
+    state.finished && return nothing
+    if iter.rev
+        prevnode = athead(state.node.wrapped.prev) ? tail(state.node.wrapped.list) : state.node.wrapped.prev
+        return (state.node.wrapped, BracketedIteratorState(PointNode{T}(prevnode), state.node.wrapped.partner === iter.hullstart.wrapped))
+    else
+        nextnode = attail(state.node.wrapped.next) ? head(state.node.wrapped.list) : state.node.wrapped.next
+        return (state.node.wrapped, BracketedIteratorState(PointNode{T}(nextnode), state.node.wrapped.partner === iter.hullend.wrapped))
     end
 end
+Base.IteratorSize(::BracketedPointNodeIterator) = Base.SizeUnknown()
 
-struct IteratingHullListNodes{S<:AbstractListNode}
-    start::S
-    rev::Bool
-    function IteratingHullListNodes(hull::AbstractConvexHull; rev::Bool = false)
-        return new{PairedLinkedLists.nodetype(hull.hull)}(hull.hull.head.next, rev)
+
+function addpoint!(h::AbstractConvexHull{T}, point::T) where T
+    # handle the case when the hull is initially empty
+    if length(h) == 0
+        push!(h.hull, point)
+        push!(h.hull.partner, point)
+        addpartner!(tail(h.hull), tail(h.hull.partner))
+        return h
     end
+    if isnothing(h.sortedby)    # if the stored points are unsorted, push the new point to the end
+        push!(h.hull.partner, point)
+    else                        # otherwise, add as appropriate to maintain sorting
+        newpointnode = newnode(h.hull.partner, point)
+        f = x -> h.sortedby(x.data) < h.sortedby(point)
+        insertbefore = getfirst(f, ListNodeIterator(h.hull))
+        isnothing(insertbefore) ? insertnode!(newpointnode, h.hull.partner.tail.prev) : insertnode!(newpointnode, insertbefore.prev)
+    end
+    if !insidehull(point, h)    # if the new point is outside the hull, update the convex hull
+        if isnothing(h.sortedby)
+            jarvismarch!(h)
+        else
+            monotonechain!(h)
+        end
+    end
+    return h
 end
 
-Base.iterate(h::AbstractConvexHull) = Base.iterate(h.hull)
-
+function Base.show(io::IO, h::AbstractConvexHull)
+    print(io, typeof(h), '(')
+    join(io, h, ", ")
+    print(io, ')')
+end
