@@ -36,7 +36,7 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
 end
 
 function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
-    length(h) == 1 && return pointdata == h.head.next.data
+    length(h) == 1 && return pointdata == h.hull.head.next.data
     abovelower = false
     ccw = h.orientation == CCW
     for nextnode in h.hull.head.next.next
