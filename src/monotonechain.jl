@@ -73,10 +73,6 @@ Each node in the list should contain a two-dimensional point, and the nodes are 
 (e.g. by lowest "x" value and by lowest "y" in case of ties, though some other sorting methods may produce valid results).
 """
 function monotonechain!(h::MutableConvexHull{T}) where T
-    stoplowernode = h.orientation === CCW ? argmax(x -> h.sortedby(x.data), ListNodeIterator(h.hull.partner)) :
-                                            argmin(x -> h.sortedby(x.data), ListNodeIterator(h.hull.partner))
-    xstoplower = h.sortedby(stoplowernode.data)[1]
-
     # exclude or include collinear points on the hull
     wrongturn(args...) = h.collinear ? !isorientedturn(h.orientation, args...) : !isshorterturn(h.orientation, args...)
 
@@ -97,13 +93,13 @@ function monotonechain!(h::MutableConvexHull{T}) where T
             hullnode = hullnode.next
             addpartner!(hullnode, node)
         else
-            if h.sortedby(node.data)[1] == xstoplower && h.sortedby(node.data) > h.sortedby(stoplowernode.data)
+            if node.partner != hullnode.next
                 continue
             else
                 hullnode = hullnode.next
             end
         end
-        onlowerhull[i] = i>1
+        onlowerhull[i] = i !== 1
         len += 1
     end
 

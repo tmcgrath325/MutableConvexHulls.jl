@@ -66,7 +66,7 @@ end
 # Base.reverse(h::AbstractConvexHull) = reverse!(copy(h))
 
 Base.empty!(h::AbstractConvexHull) = empty!(h.hull)
-Base.empty(h::AbstractConvexHull) = empty!(copy(h))
+Base.empty(h::H) where H <: AbstractConvexHull = H(h.orientation, h.collinear, h.sortedby)
 
 # Iterating a convex hull returns the data contained in the nodes of its hull list
 Base.iterate(h::AbstractConvexHull) = iterate(h, h.hull.head.next)
@@ -202,6 +202,24 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
     end
     return h
 end
+
+function addpoints!(h::MutableConvexHull{T}, points::T...; presorted::Bool=false) where T
+    h2 = monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby, presorted=presorted)
+    mergehulls(h,h2)
+    return h
+end
+
+function removepoint!(h::AbstractConvexHull{T}, node::PairedListNode{T}) where T
+    (node.list !== h.hull && node.list !== h.hull.partner) && throw(ArgumentError("The specified node must belong to the provided convex hull"))
+    partner = node.partner
+    deletenode!(node)
+    deletenode!(partner)
+    length(h) <= 1 && return h
+    isnothing(h.sortedby) ? jarvismarch!(h) : monotonechain!(h)
+    return h
+end
+
+
 
 function Base.show(io::IO, h::AbstractConvexHull)
     print(io, typeof(h), '(')

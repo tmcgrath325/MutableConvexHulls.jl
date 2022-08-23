@@ -1,5 +1,5 @@
 function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
-    length(h) == 1 && return pointdata == h.head.next.data
+    length(h) == 1 && return pointdata == h.hull.head.next.data
 
     abovelower = false
     belowupper = false
