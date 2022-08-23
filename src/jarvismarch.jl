@@ -12,7 +12,7 @@ function jarvissearch(query::AbstractListNode{T}, prevedge, pointsnodes, bettert
     return next
 end
 
-function jarvismarch!(h::AbstractConvexHull, initedge, stop::Union{PairedListNode{T},Nothing}=nothing) where T
+function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PairedListNode{T},Nothing}=nothing) where T
     pointslist = h.hull.partner
     hull = h.hull
     if isnothing(stop)
@@ -28,7 +28,7 @@ function jarvismarch!(h::AbstractConvexHull, initedge, stop::Union{PairedListNod
     prevedge = initedge
     while counter == 0 || current !== stop.partner
         if counter > length(pointslist)
-            throw(ErrorException("More points were added to the hull than exist in the provided list of points."))
+            throw(ErrorException("More points were added to the hull than exist in the list of candidate points."))
         end
         counter += 1
         next = jarvissearch(current, prevedge, ListNodeIterator(pointslist), betterturn)
@@ -48,16 +48,16 @@ function jarvismarch!(h::AbstractConvexHull, initedge, stop::Union{PairedListNod
     return h
 end
 
-function jarvismarch!(h::MutableConvexHull) where T
+function jarvismarch!(h::MutableConvexHull)
     # empty the hull and
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    length(h.hull.partner) == 1 && push!(hull, first(h.hull.partner))
-    length(h.hull.partner) <= 1 && return hull
+    length(h.hull.partner) == 1 && push!(h.hull, first(h.hull.partner))
+    length(h.hull.partner) <= 1 && return h
 
     # select the appropriate starting node
-    f = isnothing(h.sortedby) ? node -> node.data : node -> h.sortedby(node.data)
+    f = node -> h.sortedby(node.data)
     firstnode = h.orientation === CCW ? argmin(f, ListNodeIterator(h.hull.partner)) : argmax(f, ListNodeIterator(h.hull.partner))
 
     # reinitialize with the starting point
@@ -70,16 +70,16 @@ function jarvismarch!(h::MutableConvexHull) where T
     return h
 end
 
-function jarvismarch!(h::MutableLowerConvexHull) where T
+function jarvismarch!(h::MutableLowerConvexHull)
     # empty the hull and
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    length(h.hull.partner) == 1 && push!(hull, first(h.hull.partner))
-    length(h.hull.partner) <= 1 && return hull
+    length(h.hull.partner) == 1 && push!(h.hull, first(h.hull.partner))
+    length(h.hull.partner) <= 1 && return h
 
     # select the appropriate starting and stopping nodes
-    f = isnothing(h.sortedby) ? node -> node.data : node -> h.sortedby(node.data)
+    f = node -> h.sortedby(node.data)
     firstnode = h.orientation === CCW ? argmin(f, ListNodeIterator(h.hull.partner)) : argmax(f, ListNodeIterator(h.hull.partner))
     stop = h.orientation === CW ? argmin(f, ListNodeIterator(h.hull.partner)) : argmax(f, ListNodeIterator(h.hull.partner))
 
@@ -97,16 +97,16 @@ function jarvismarch!(h::MutableLowerConvexHull) where T
     return h
 end
 
-function jarvismarch!(h::MutableUpperConvexHull) where T
+function jarvismarch!(h::MutableUpperConvexHull)
     # empty the hull and
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    length(h.hull.partner) == 1 && push!(hull, first(h.hull.partner))
-    length(h.hull.partner) <= 1 && return hull
+    length(h.hull.partner) == 1 && push!(h.hull, first(h.hull.partner))
+    length(h.hull.partner) <= 1 && return h.hull
 
     # select the appropriate starting and stopping nodes
-    f = isnothing(h.sortedby) ? node -> node.data : node -> h.sortedby(node.data)
+    f = node -> h.sortedby(node.data)
     firstnode = h.orientation === CW ? argmin(f, ListNodeIterator(h.hull.partner)) : argmax(f, ListNodeIterator(h.hull.partner))
     stop = h.orientation === CCW ? argmin(f, ListNodeIterator(h.hull.partner)) : argmax(f, ListNodeIterator(h.hull.partner))
 
@@ -124,29 +124,29 @@ function jarvismarch!(h::MutableUpperConvexHull) where T
     return h
 end
 
-function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Union{Function,Nothing}=nothing) where T
+function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
     pointslist = PairedLinkedList{T}(points...)
     hull = PairedLinkedList{T}()
     addpartner!(hull, pointslist)
-    h = MutableConvexHull{T}(hull, orientation, collinear, sortedby)
+    h = MutableConvexHull{T, typeof(sortedby)}(hull, orientation, collinear, sortedby, false)
     jarvismarch!(h)
     return h
 end
 
-function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Union{Function,Nothing}=nothing) where T
+function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
     pointslist = PairedLinkedList{T}(points...)
     hull = PairedLinkedList{T}()
     addpartner!(hull, pointslist)
-    h = MutableLowerConvexHull{T}(hull, orientation, collinear, sortedby)
+    h = MutableLowerConvexHull{T, typeof(sortedby)}(hull, orientation, collinear, sortedby, false)
     jarvismarch!(h)
     return h
 end
 
-function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Union{Function,Nothing}=nothing) where T
+function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
     pointslist = PairedLinkedList{T}(points...)
     hull = PairedLinkedList{T}()
     addpartner!(hull, pointslist)
-    h = MutableUpperConvexHull{T}(hull, orientation, collinear, sortedby)
+    h = MutableUpperConvexHull{T, typeof(sortedby)}(hull, orientation, collinear, sortedby, false)
     jarvismarch!(h)
     return h
 end

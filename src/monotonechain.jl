@@ -132,7 +132,7 @@ function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
     pointslist = PairedLinkedList{T}(sortedpoints...)
     hull = PairedLinkedList{T}()
     addpartner!(hull, pointslist)
-    h = MutableLowerConvexHull{T}(hull, orientation, collinear, sortedby)
+    h = MutableLowerConvexHull{T, typeof(sortedby)}(hull, orientation, collinear, sortedby, true)
     monotonechain!(h)
     return h
 end
@@ -142,7 +142,7 @@ function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
     pointslist = PairedLinkedList{T}(sortedpoints...)
     hull = PairedLinkedList{T}()
     addpartner!(hull, pointslist)
-    h = MutableUpperConvexHull{T}(hull, orientation, collinear, sortedby)
+    h = MutableUpperConvexHull{T, typeof(sortedby)}(hull, orientation, collinear, sortedby, true)
     monotonechain!(h)
     return h
 end
@@ -152,7 +152,7 @@ function monotonechain(points::AbstractVector{T}; orientation::HullOrientation =
     pointslist = PairedLinkedList{T}(sortedpoints...)
     hull = PairedLinkedList{T}()
     addpartner!(hull, pointslist)
-    h = MutableConvexHull{T}(hull, orientation, collinear, sortedby)
+    h = MutableConvexHull{T, typeof(sortedby)}(hull, orientation, collinear, sortedby, true)
     monotonechain!(h)
     return h
 end

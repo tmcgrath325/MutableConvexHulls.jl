@@ -1,10 +1,11 @@
 # clockwise/counterclockwise selection
-struct CW end
-struct CCW end
-const HullOrientation = Type{<:Union{CW,CCW}}
+# struct CW end
+# struct CCW end
+# const HullOrientation = Type{<:Union{CW,CCW}}
 
-Base.:(!)(::Type{CW}) = CCW
-Base.:(!)(::Type{CCW}) = CW
+@enum HullOrientation CW CCW
+
+Base.:(!)(o::HullOrientation) = o === CCW ? CW : CCW
 
 # default previous edge direction initializations
 const UP = (0,1)

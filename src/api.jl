@@ -1,43 +1,49 @@
 abstract type AbstractConvexHull{T} end
 
-mutable struct MutableConvexHull{T} <: AbstractConvexHull{T}
+mutable struct MutableConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
-    sortedby::Union{Function,Nothing}
+    sortedby::F
+    issorted::Bool
 end
-function MutableConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Function,Nothing} = nothing) where T
+function MutableConvexHull{T}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity, issorted::Bool=false) where {T,F}
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableConvexHull{T}(hull, orientation, collinear, sortedby)
+    return MutableConvexHull{T,F}(hull, orientation, collinear, sortedby, issorted)
 end
+MutableConvexHull{T,F}(orientation, collienar, sortedby, issorted) where {T,F} = MutableConvexHull{T}(orientation,collienar, sortedby, issorted)
 
-mutable struct MutableLowerConvexHull{T} <: AbstractConvexHull{T}
+mutable struct MutableLowerConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
-    sortedby::Union{Function,Nothing}
+    sortedby::F
+    issorted::Bool
 end
-function MutableLowerConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Function,Nothing} = nothing) where T
+function MutableLowerConvexHull{T}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity, issorted::Bool=false) where {T,F}
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableLowerConvexHull{T}(hull, orientation, collinear, sortedby)
+    return MutableLowerConvexHull{T,F}(hull, orientation, collinear, sortedby, issorted)
 end
+MutableLowerConvexHull{T,F}(orientation, collienar, sortedby, issorted) where {T,F} = MutableLowerConvexHull{T}(orientation,collienar, sortedby, issorted)
 
-mutable struct MutableUpperConvexHull{T} <: AbstractConvexHull{T}
+mutable struct MutableUpperConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     hull::PairedLinkedList{T}
     orientation::HullOrientation
     collinear::Bool
-    sortedby::Union{Function,Nothing}
+    sortedby::F
+    issorted::Bool
 end
-function MutableUpperConvexHull{T}(orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Union{Function,Nothing} = nothing) where T
+function MutableUpperConvexHull{T}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity, issorted::Bool=false) where {T,F}
     pointslist = PairedLinkedList{T}()
     hull = PairedLinkedList{T}()
     addpartner!(hull,pointslist)
-    return MutableUpperConvexHull{T}(hull, orientation, collinear, sortedby)
+    return MutableUpperConvexHull{T,F}(hull, orientation, collinear, sortedby, issorted)
 end
+MutableUpperConvexHull{T,F}(orientation, collienar, sortedby, issorted) where {T,F} = MutableUpperConvexHull{T}(orientation,collienar, sortedby, issorted)
 
 Base.isempty(h::AbstractConvexHull) = isempty(h.hull)
 Base.length(h::AbstractConvexHull) = length(h.hull)
@@ -50,11 +56,12 @@ function Base.copy!(h2::H, h::H) where {T,H<:AbstractConvexHull{T}}
     h2.orientation = h.orientation
     h2.collinear = h.collinear
     h2.sortedby = h.sortedby
+    h2.issorted = h.issorted
     return h2
 end
 function Base.copy(h::H) where {T,H<:AbstractConvexHull{T}}
     copiedhull = copy(h.hull)
-    return H(copiedhull, h.orientation, h.collinear, h.sortedby)
+    return H(copiedhull, h.orientation, h.collinear, h.sortedby, h.issorted)
 end
 
 # function Base.reverse!(h::AbstractConvexHull)
@@ -66,7 +73,7 @@ end
 # Base.reverse(h::AbstractConvexHull) = reverse!(copy(h))
 
 Base.empty!(h::AbstractConvexHull) = empty!(h.hull)
-Base.empty(h::H) where H <: AbstractConvexHull = H(h.orientation, h.collinear, h.sortedby)
+Base.empty(h::H) where H <: AbstractConvexHull = H(h.orientation, h.collinear, h.sortedby, h.issorted)
 
 # Iterating a convex hull returns the data contained in the nodes of its hull list
 Base.iterate(h::AbstractConvexHull) = iterate(h, h.hull.head.next)
@@ -185,7 +192,7 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
         addpartner!(tail(h.hull), tail(h.hull.partner))
         return h
     end
-    if isnothing(h.sortedby)    # if the stored points are unsorted, push the new point to the end
+    if !h.issorted              # if the stored points are unsorted, push the new point to the end
         push!(h.hull.partner, point)
     else                        # otherwise, add as appropriate to maintain sorting
         newpointnode = newnode(h.hull.partner, point)
@@ -194,7 +201,8 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
         isnothing(insertbefore) ? insertnode!(newpointnode, h.hull.partner.tail.prev) : insertnode!(newpointnode, insertbefore.prev)
     end
     if !insidehull(point, h)    # if the new point is outside the hull, update the convex hull
-        if isnothing(h.sortedby)
+        @show point
+        if !h.issorted
             jarvismarch!(h)
         else
             monotonechain!(h)
@@ -215,7 +223,7 @@ function removepoint!(h::AbstractConvexHull{T}, node::PairedListNode{T}) where T
     deletenode!(node)
     deletenode!(partner)
     length(h) <= 1 && return h
-    isnothing(h.sortedby) ? jarvismarch!(h) : monotonechain!(h)
+    !h.issorted ? jarvismarch!(h) : monotonechain!(h)
     return h
 end
 
