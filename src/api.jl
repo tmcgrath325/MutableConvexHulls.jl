@@ -210,19 +210,49 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
     return h
 end
 
-function addpoints!(h::MutableConvexHull{T}, points::T...; presorted::Bool=false) where T
+function mergepoints!(h::MutableConvexHull{T}, points::T...; presorted::Bool=false) where T
     h2 = monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby, presorted=presorted)
-    mergehulls(h,h2)
+    mergehulls!(h,h2)
+    return h
+end
+function mergepoints!(h::MutableLowerConvexHull{T}, points::T...; presorted::Bool=false) where T
+    h2 = lower_monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby, presorted=presorted)
+    mergehulls!(h,h2)
+    return h
+end
+function mergepoints!(h::MutableUpperConvexHull{T}, points::T...; presorted::Bool=false) where T
+    h2 = upper_monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby, presorted=presorted)
+    mergehulls!(h,h2)
     return h
 end
 
 function removepoint!(h::AbstractConvexHull{T}, node::PairedListNode{T}) where T
     (node.list !== h.hull && node.list !== h.hull.partner) && throw(ArgumentError("The specified node must belong to the provided convex hull"))
-    partner = node.partner
-    deletenode!(node)
-    deletenode!(partner)
-    length(h) <= 1 && return h
-    !h.issorted ? jarvismarch!(h) : monotonechain!(h)
+    if h.issorted
+        if node.list === h.hull
+            start = node.prev.partner
+            stop = node.next.partner
+            deletenode!(node.partner)
+            deletenode!(node)
+            start = start.list === h.hull.partner ? start : firstpoint(h)
+            stop = stop.list === h.hull.partner ? stop : lastpoint(h)
+            monotonechain!(h, start, stop)
+        elseif haspartner(node)
+            start = node.partner.prev.partner
+            stop = node.partner.next.partner
+            deletenode!(node.partner)
+            deletenode!(node)
+            start = start.list === h.hull.partner ? start : firstpoint(h)
+            stop = stop.list === h.hull.partner ? stop : lastpoint(h)
+            monotonechain!(h, start, stop)
+        else
+            deletenode!(node)
+        end
+    else
+        haspartner(node) && deletenode!(node.partner)
+        deletenode!(node)
+        jarvismarch!(h)
+    end
     return h
 end
 

@@ -8,10 +8,10 @@ include("api.jl")
 include("monotonechain.jl")
 include("jarvismarch.jl")
 include("inside.jl")
-include("chan.jl")
+include("merge.jl")
 
 export MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull
-export addpoint!, removepoint!
+export addpoint!, mergepoints!, removepoint!
 export HullNode, PointNode, HullNodeIterator, PointNodeIterator, BracketedPointNodeIterator
 export monotonechain, lower_monotonechain, upper_monotonechain
 export jarvismarch, lower_jarvismarch, upper_jarvismarch

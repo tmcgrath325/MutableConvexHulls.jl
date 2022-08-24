@@ -9,7 +9,6 @@ Random.seed!(1234)
 tests = ["orientation",
          "monotonechain",
          "jarvismarch",
-         "inside",
          "convexhull",
         ]
 

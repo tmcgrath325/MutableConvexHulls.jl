@@ -99,6 +99,7 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     # filter out empty hulls
     hulls = filter(x->length(x.hull)>0,[h, others...])
     length(hulls) == 0 && return h
+    maxlength = sum(x->length(x.hull), hulls)
 
     # prepare sorting function and orientation test
     f = x -> h.sortedby(x.data)
@@ -113,12 +114,8 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     end
 
     # add points from all hulls into the points list. 
-    # Assuming the list of points for each hull are sorted the same way, this will preserve the sorting in the new hull.
-    # Otherwise, there is no guarantee of sorting for the list of points for the new hull. 
-    # The hull itself will still be sorted as specified by `orientation` and `collinear`
     remaininghulls = collect(1:length(hulls))
-    reversehulls = [x.orientation != h.orientation for x in hulls]
-    pointnodes = [reversehulls[i] ? tail(x.hull.partner) : head(x.hull.partner) for (i,x) in enumerate(hulls)]
+    pointnodes = [head(x.hull.partner) for x in hulls]
     currentnode = mergedpoints.head
     while !isempty(remaininghulls)
         hullidx = argmin(x->f(pointnodes[x]), remaininghulls)
@@ -133,19 +130,20 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
             nextnode.list == mergedpoints && removepartner!(nextnode)
         end
         currentnode = currentnode.next
-        pointnodes[hullidx] = reversehulls[hullidx] ? pointnodes[hullidx].prev : pointnodes[hullidx].next
-        if reversehulls[hullidx] ? athead(pointnodes[hullidx]) : attail(pointnodes[hullidx])
+        pointnodes[hullidx] = pointnodes[hullidx].next
+        if attail(pointnodes[hullidx])
             deleteidx = findfirst(x->x==hullidx, remaininghulls)
             deleteat!(remaininghulls, deleteidx)
         end
     end
     
     # determine starting and stopping points
-    # start = argmin(f, map(x->argmin(f, ListNodeIterator(x)), hulltargets))
-    start = h.orientation === CCW ? argmin(f, map(x->argmin(f, ListNodeIterator(x)), hulltargets)) : argmax(f, map(x->argmax(f, ListNodeIterator(x)), hulltargets))
+    start = buildinreverse(h) ? argmax(f, [head(x) for x in hulltargets]) :
+                                argmin(f, [head(x) for x in hulltargets])
     stop = start
     if H <: Union{MutableUpperConvexHull, MutableLowerConvexHull}
-        stop = orientation === CCW ? argmax(f, map(x->argmax(f, ListNodeIterator(x)), hulltargets)) : argmin(f, map(x->argmin(f, ListNodeIterator(x)), hulltargets))
+        stop = buildinreverse(h) ? argmin(f, [tail(x) for x in hulltargets]) :
+                                   argmax(f, [tail(x) for x in hulltargets])
     end
 
     # add first point to hull
@@ -155,20 +153,17 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     
     # perform jarvis march with search that makes use of the sorted nature of the hulls
     counter = 0
-    maxlength = sum(x->length(x.hull), hulls)
     current = head(mergedhull)
     candidates = [head(x) for x in hulltargets]
     prevedge = H <: MutableUpperConvexHull ? UP : DOWN
-    while counter == 0 || current !== stop.partner
+    while counter == 0 || current !== stop
         if counter > maxlength
             throw(ErrorException("More points were added to the hull than exist in the original hulls to be merged."))
         end
         counter += 1
         for (i, ht) in enumerate(hulltargets)
             candidates[i] = (current.list === ht && (h.collinear || !hulls[i].collinear)) ?     # If the current point belongs to the list being considered, we already know 
-                (reversehulls[i] ?                                                              # its candidate point as long as it doesn't contain extraneous collinear points
-                    (athead(current.prev) ? tail(ht) : current.prev) : 
-                    (attail(current.next) ? head(ht) : current.next)) : 
+                attail(current.next) ? head(ht) : current.next :                                # its candidate point as long as it doesn't contain extraneous collinear points
                 jarvissortedsearch(current, prevedge, ht, betterturn)
         end
         next = jarvissearch(current, prevedge, candidates, betterturn)
@@ -191,7 +186,6 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
         push!(mergedhull, stop.data)
         addpartner!(tail(mergedhull), stop.partner)
     end
-
     return h
 end
 mergehulls(h::H, others::H...) where H <: AbstractConvexHull = mergehulls!(copy(h), others...)
