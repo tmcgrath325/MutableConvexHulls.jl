@@ -201,7 +201,6 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
         isnothing(insertbefore) ? insertnode!(newpointnode, h.hull.partner.tail.prev) : insertnode!(newpointnode, insertbefore.prev)
     end
     if !insidehull(point, h)    # if the new point is outside the hull, update the convex hull
-        @show point
         if !h.issorted
             jarvismarch!(h)
         else

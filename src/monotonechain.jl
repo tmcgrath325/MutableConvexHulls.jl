@@ -42,7 +42,7 @@ function monotonechain!(h::MutableUpperConvexHull, stop::PairedListNode{T} = h.o
     wrongturn(args...) = h.collinear ? !isorientedturn(h.orientation, args...) : !isshorterturn(h.orientation, args...)
     # perform monotone chain algorithm
     len = 0
-    uppernode = haspartner(h.hull.partner.tail.prev) ? h.hull.partner.tail.prev.partner : h.hull.head
+    uppernode = h.hull.head
     for node in ListNodeIterator(h.hull.partner; rev=(h.orientation===CCW))
         if uppernode !== node.partner
             while len >= 2 && wrongturn(uppernode.prev.data, uppernode.data, node.data)

@@ -53,7 +53,10 @@ function jarvismarch!(h::MutableConvexHull)
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    length(h.hull.partner) == 1 && push!(h.hull, first(h.hull.partner))
+    if length(h.hull.partner) == 1 
+        push!(h.hull, first(h.hull.partner))
+        addpartner!(head(h.hull), head(h.hull.partner))
+    end
     length(h.hull.partner) <= 1 && return h
 
     # select the appropriate starting node
@@ -75,7 +78,10 @@ function jarvismarch!(h::MutableLowerConvexHull)
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    length(h.hull.partner) == 1 && push!(h.hull, first(h.hull.partner))
+    if length(h.hull.partner) == 1 
+        push!(h.hull, first(h.hull.partner))
+        addpartner!(head(h.hull), head(h.hull.partner))
+    end
     length(h.hull.partner) <= 1 && return h
 
     # select the appropriate starting and stopping nodes
@@ -102,7 +108,10 @@ function jarvismarch!(h::MutableUpperConvexHull)
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    length(h.hull.partner) == 1 && push!(h.hull, first(h.hull.partner))
+    if length(h.hull.partner) == 1 
+        push!(h.hull, first(h.hull.partner))
+        addpartner!(head(h.hull), head(h.hull.partner))
+    end
     length(h.hull.partner) <= 1 && return h.hull
 
     # select the appropriate starting and stopping nodes
