@@ -10,13 +10,15 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
     for prevnode in ListNodeIterator(h.hull)
         nextnode = attail(prevnode.next) ? head(h.hull) : prevnode.next
         nextnextnode = attail(nextnode.next) ? head(h.hull) : nextnode.next
-        
+
         # the lower hull should always be listed first
         if !alreadycheckedlower
+            # check if the lower hull has been passed through
             if ccw ? (prevnode.data[1] > nextnode.data[1]) : (prevnode.data[1] < nextnode.data[1])
                 alreadycheckedlower = true
             elseif !abovelower
-                if pointdata[1] == prevnode.data[1] == nextnode.data[1] # the point lies along the extreme left or right edge
+                # if the point lies along the extreme left or right edge of the entire hull...
+                if pointdata[1] == prevnode.data[1] == nextnode.data[1] 
                     if h.collinear 
                         abovelower = (pointdata == nextnode.data || pointdata == prevnode.data) 
                     else
@@ -25,10 +27,13 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
                     end
                     abovelower && return true
                     nextnode.data != nextnextnode.data && return false
+                # if the point is even with the previous node...
                 elseif pointdata[1] == prevnode.data[1]
                     abovelower = h.collinear ? pointdata[2] > prevnode.data[2] : pointdata[2] >= prevnode.data[2]
+                # if the point is even with the next node...
                 elseif pointdata[1] == nextnode.data[1] !== nextnextnode.data[1]
                     abovelower = h.collinear ? pointdata[2] > nextnode.data[2] : pointdata[2] >= nextnode.data[2]
+                # if the point is in between the previous and next nodes...
                 elseif ccw ? (prevnode.data[1] < pointdata[1] < nextnode.data[1]) : (prevnode.data[1] > pointdata[1] > nextnode.data[1])
                     yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
                     if h.collinear ? pointdata[2] > yhull : pointdata[2] >= yhull
@@ -38,7 +43,8 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
             end
         end
         if alreadycheckedlower
-            !abovelower && return false
+            !abovelower && return false # we can stop if we already know the point is outside the hull
+            # if the point lies along the extreme left or right edge of the entire hull...
             if pointdata[1] == prevnode.data[1] == nextnode.data[1]
                 if h.collinear 
                     belowupper = (pointdata == nextnode.data || pointdata == prevnode.data) 
@@ -46,11 +52,14 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
                     belowupper = nextnode.data[2] >= prevnode.data[2] ? prevnode.data[2] <= pointdata[2] <= nextnode.data[2] :
                                                                         prevnode.data[2] >= pointdata[2] >= nextnode.data[2]
                 end
-                belowupper && return true
+                belowupper && return true # we can stop if we know the hull is within both the upper and lower hulls
+            # if the point is even with the previous node...
             elseif pointdata[1] == prevnode.data[1]
                 belowupper = h.collinear ? pointdata[2] < prevnode.data[2] : pointdata[2] <= prevnode.data[2]
+            # if the point is even with the next node...
             elseif pointdata[1] == nextnode.data[1]
                 belowupper = h.collinear ? pointdata[2] < nextnode.data[2] : pointdata[2] <= nextnode.data[2]
+            # if the point is in between the previous and next nodes...
             elseif ccw ? (prevnode.data[1] >= pointdata[1] >= nextnode.data[1]) : (prevnode.data[1] <= pointdata[1] <= nextnode.data[1])
                 yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
                 if h.collinear ? pointdata[2] < yhull : pointdata[2] <= yhull

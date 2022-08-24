@@ -54,7 +54,7 @@ Each node in the list should contain a two-dimensional point, and the nodes are 
 function monotonechain!(h::MutableConvexHull{T},
                         start::PairedListNode{T} = firstpoint(h),
                         stop::PairedListNode{T} = lastpoint(h)) where T
-    # remove extreme points from the hull (allows node to switch ends in the case of certain deletions)
+    # remove extreme points from the hull (allows them to switch ends in the case of certain deletions)
     length(h) > 0 && deletenode!(head(h.hull))    
     length(h) > 0 && deletenode!(tail(h.hull))    
     # exclude or include collinear points on the hull
