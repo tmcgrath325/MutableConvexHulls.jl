@@ -198,7 +198,7 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
         newpointnode = newnode(h.hull.partner, point)
         f = x -> h.sortedby(x.data) > h.sortedby(point)
         insertbefore = getfirst(f, ListNodeIterator(h.hull.partner))
-        isnothing(insertbefore) ? insertnode!(newpointnode, h.hull.partner.tail.prev) : insertnode!(newpointnode, insertbefore.prev)
+        isnothing(insertbefore) ? insertafter!(newpointnode, h.hull.partner.tail.prev) : insertafter!(newpointnode, insertbefore.prev)
     end
     if !insidehull(point, h)    # if the new point is outside the hull, update the convex hull
         if !h.issorted
