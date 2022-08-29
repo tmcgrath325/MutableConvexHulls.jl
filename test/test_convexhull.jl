@@ -6,11 +6,11 @@
     @testset "lower convex hull" begin
         @testset "initialize" begin
             h = MutableLowerConvexHull{eltype(boxcoords)}()
-            @test h.orientation === CCW && h.collinear === false && h.sortedby === identity && h.issorted === false
-            hull = PairedLinkedList{eltype(boxcoords)}()
-            points = PairedLinkedList{eltype(boxcoords)}()
-            addpartner!(hull, points)
-            h2 = MutableLowerConvexHull{eltype(boxcoords), typeof(by)}(hull, CW, true, by, false)
+            @test h.orientation === CCW && h.collinear === false && h.sortedby === identity
+            hull = HullList{eltype(boxcoords)}(;sortedby=by)
+            points = PointList{eltype(boxcoords)}(;sortedby=by)
+            addtarget!(hull, points)
+            h2 = MutableLowerConvexHull{eltype(boxcoords), typeof(by)}(hull, points, CW, true, by)
         end
         @testset "iterate" begin
             
@@ -28,7 +28,7 @@
         @testset "add point" begin
             for j=1:n
                 shuffledcoords = shuffle(boxcoords)
-                hulls = [MutableLowerConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableLowerConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 for (i, coord) in enumerate(shuffledcoords)
                     for h in hulls
                         addpoint!(h, coord)
@@ -42,7 +42,7 @@
                 shuffledcoords = shuffle(boxcoords)
                 len = Int(sqrt(length(boxcoords)))
                 splitcoords = [shuffledcoords[len*(i-1)+1:len*i] for i=1:len]
-                hulls = [MutableLowerConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableLowerConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 mergedcoords = eltype(boxcoords)[]
                 for scoords in splitcoords
                     append!(mergedcoords, scoords)
@@ -56,7 +56,7 @@
         @testset "remove point" begin
             for j=1:n
                 shuffledcoords = shuffle(boxcoords)
-                hulls = [MutableLowerConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableLowerConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 for h in hulls
                     for coord in shuffledcoords
                         addpoint!(h, coord)
@@ -67,7 +67,7 @@
                     removeddata = shuffledcoords[removeidx]
                     deleteat!(shuffledcoords, removeidx)
                     for h in hulls
-                        removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.partner)))
+                        removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.target)))
                         @test h == lower_jarvismarch(shuffledcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
                     end
                 end
@@ -78,11 +78,11 @@
     @testset "upper convex hull" begin
         @testset "initialize" begin
             h = MutableUpperConvexHull{eltype(boxcoords)}()
-            @test h.orientation === CCW && h.collinear === false && h.sortedby === identity && h.issorted === false
-            hull = PairedLinkedList{eltype(boxcoords)}()
-            points = PairedLinkedList{eltype(boxcoords)}()
-            addpartner!(hull, points)
-            h2 = MutableUpperConvexHull{eltype(boxcoords), typeof(by)}(hull, CW, true, by, false)
+            @test h.orientation === CCW && h.collinear === false && h.sortedby === identity
+            hull = HullList{eltype(boxcoords)}(;sortedby=by)
+            points = PointList{eltype(boxcoords)}(;sortedby=by)
+            addtarget!(hull, points)
+            h2 = MutableUpperConvexHull{eltype(boxcoords), typeof(by)}(hull, points, CW, true, by)
         end
         @testset "iterate" begin
             
@@ -100,7 +100,7 @@
         @testset "add point" begin
             for j=1:n
                 shuffledcoords = shuffle(boxcoords)
-                hulls = [MutableUpperConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableUpperConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 for (i, coord) in enumerate(shuffledcoords)
                     for h in hulls
                         addpoint!(h, coord)
@@ -114,7 +114,7 @@
                 shuffledcoords = shuffle(boxcoords)
                 len = Int(sqrt(length(boxcoords)))
                 splitcoords = [shuffledcoords[len*(i-1)+1:len*i] for i=1:len]
-                hulls = [MutableUpperConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableUpperConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 mergedcoords = eltype(boxcoords)[]
                 for scoords in splitcoords
                     append!(mergedcoords, scoords)
@@ -128,7 +128,7 @@
         @testset "remove point" begin
             for j=1:n
                 shuffledcoords = shuffle(boxcoords)
-                hulls = [MutableUpperConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableUpperConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 for h in hulls
                     for coord in shuffledcoords
                         addpoint!(h, coord)
@@ -139,7 +139,7 @@
                     removeddata = shuffledcoords[removeidx]
                     deleteat!(shuffledcoords, removeidx)
                     for h in hulls
-                        removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.partner)))
+                        removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.target)))
                         @test h == upper_jarvismarch(shuffledcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
                     end
                 end
@@ -150,11 +150,11 @@
     @testset "convex hull" begin
         @testset "initialize" begin
             h = MutableConvexHull{eltype(boxcoords)}()
-            @test h.orientation === CCW && h.collinear === false && h.sortedby === identity && h.issorted === false
-            hull = PairedLinkedList{eltype(boxcoords)}()
-            points = PairedLinkedList{eltype(boxcoords)}()
-            addpartner!(hull, points)
-            h2 = MutableConvexHull{eltype(boxcoords), typeof(by)}(hull, CW, true, by, false)
+            @test h.orientation === CCW && h.collinear === false && h.sortedby === identity
+            hull = HullList{eltype(boxcoords)}(;sortedby=by)
+            points = PointList{eltype(boxcoords)}(;sortedby=by)
+            addtarget!(hull, points)
+            h2 = MutableConvexHull{eltype(boxcoords), typeof(by)}(hull, points, CW, true, by)
         end
         @testset "iterate" begin
             
@@ -172,7 +172,7 @@
         @testset "add point" begin
             for j=1:n
                 shuffledcoords = shuffle(boxcoords)
-                hulls = [MutableConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 for (i, coord) in enumerate(shuffledcoords)
                     for h in hulls
                         addpoint!(h, coord)
@@ -186,7 +186,7 @@
                 shuffledcoords = shuffle(boxcoords)
                 len = Int(sqrt(length(boxcoords)))
                 splitcoords = [shuffledcoords[len*(i-1)+1:len*i] for i=1:len]
-                hulls = [MutableConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 mergedcoords = eltype(boxcoords)[]
                 for scoords in splitcoords
                     append!(mergedcoords, scoords)
@@ -200,7 +200,7 @@
         @testset "remove point" begin
             for j=1:n
                 shuffledcoords = shuffle(boxcoords)
-                hulls = [MutableConvexHull{eltype(shuffledcoords)}(o, c, f, s) for o in [CCW,CW] for c in [false,true] for f in [identity, by] for s in [false,true]]
+                hulls = [MutableConvexHull{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
                 for h in hulls
                     for coord in shuffledcoords
                         addpoint!(h, coord)
@@ -211,7 +211,7 @@
                     removeddata = shuffledcoords[removeidx]
                     deleteat!(shuffledcoords, removeidx)
                     for h in hulls
-                        removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.partner)))
+                        removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.target)))
                         @test h == jarvismarch(shuffledcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
                     end
                 end

@@ -1,4 +1,4 @@
-function jarvissortedsearch(query::AbstractListNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
+function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
     pointslist.len == 1 && return head(pointslist)
     head(pointslist).data == tail(pointslist).data && throw(ArgumentError("All points in the list are duplicates."))
@@ -17,84 +17,84 @@ function jarvissortedsearch(query::AbstractListNode, prevedge, pointslist::Abstr
     return tail(pointslist)
 end
 
-function jarvisbinarysearch(query::AbstractListNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
-    pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
-    pointslist.len == 1 && return head(pointslist)
-    head(pointslist).data == tail(pointslist).data && throw(ArgumentError("All points in the list are duplicates."))
+# function jarvisbinarysearch(query::PointNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
+#     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
+#     pointslist.len == 1 && return head(pointslist)
+#     head(pointslist).data == tail(pointslist).data && throw(ArgumentError("All points in the list are duplicates."))
 
-    # initialize interval bounds
-    left = 1
-    right = pointslist.len
-    middle = Int(floor(pointslist.len/2))
-    target = getnode(pointslist, middle)
+#     # initialize interval bounds
+#     left = 1
+#     right = pointslist.len
+#     middle = Int(floor(pointslist.len/2))
+#     target = getnode(pointslist, middle)
 
-    # recursively shrink interval until a tangent is found
-    return jarvisbinarysearchinterval(left, right, middle, target, query, prevedge, pointslist, betterturn)
-end
+#     # recursively shrink interval until a tangent is found
+#     return jarvisbinarysearchinterval(left, right, middle, target, query, prevedge, pointslist, betterturn)
+# end
 
-# Perform binary search in the interval specified by left and right. The middle index and target node are already determined for the interval
-function jarvisbinarysearchinterval(left::Int, right::Int, middle::Int, target::AbstractListNode, query::AbstractListNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
-    left == middle == right && return target
+# # Perform binary search in the interval specified by left and right. The middle index and target node are already determined for the interval
+# function jarvisbinarysearchinterval(left::Int, right::Int, middle::Int, target::AbstractNode, query::PointNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
+#     left == middle == right && return target
 
-    # wrap around the list to get prev/next values for the ends
-    prev = middle == 1 ? tail(pointslist) : target.prev
-    next = middle == pointslist.len ? head(pointslist) : target.next
+#     # wrap around the list to get prev/next values for the ends
+#     prev = middle == 1 ? tail(pointslist) : target.prev
+#     next = middle == pointslist.len ? head(pointslist) : target.next
 
-    # if the query is a duplicate of a hull point, 
-    (query.data == target.data) && return next
-    (query.data == prev.data) && return target
-    (query.data == next.data) && return next.next
+#     # if the query is a duplicate of a hull point, 
+#     (query.data == target.data) && return next
+#     (query.data == prev.data) && return target
+#     (query.data == next.data) && return next.next
 
-    # check if the adjacent nodes represent "better" options than the target one
-    prev_better = betterturn(prevedge, query.data, target.data, prev.data)
-    next_better = betterturn(prevedge, query.data, target.data, next.data)
-    if !prev_better && !next_better # the target is the best choice
-        return target
-    elseif right - left == 1
-        # handle cases when the best point lies "before" the beginning of the list
-        if middle == 1
-            while prev_better
-                target = prev
-                prev = target.prev
-                prev_better = betterturn(prevedge, query.data, target.data, prev.data)
-            end
-            return target
-        end
-        # handle cases when the best point lies "after" the end of the list
-        if middle == pointslist.len
-            while next_better
-                target = next
-                next = target.next
-                next_better = betterturn(prevedge, query.data, target.data, next.data)
-            end
-            return target
-        end
-        # otherwise, pick the better of the two remaining points
-        return prev_better ? prev : next
-    elseif prev_better # explore the left interval
-        (right - left) == 0 && return prev
-        right = middle
-        middle = Int(floor((right - left)/2) + left)
-        idx_change = right - middle
-        for i=1:idx_change
-            target = target.prev
-        end
-    else # explore the right interval
-        (right - left) == 0 && return next
-        left = middle
-        middle = Int(ceil((right - left)/2) + left)
-        idx_change = middle - left
-        for i=1:idx_change
-            target = target.next
-        end
-    end
+#     # check if the adjacent nodes represent "better" options than the target one
+#     prev_better = betterturn(prevedge, query.data, target.data, prev.data)
+#     next_better = betterturn(prevedge, query.data, target.data, next.data)
+#     if !prev_better && !next_better # the target is the best choice
+#         return target
+#     elseif right - left == 1
+#         # handle cases when the best point lies "before" the beginning of the list
+#         if middle == 1
+#             while prev_better
+#                 target = prev
+#                 prev = target.prev
+#                 prev_better = betterturn(prevedge, query.data, target.data, prev.data)
+#             end
+#             return target
+#         end
+#         # handle cases when the best point lies "after" the end of the list
+#         if middle == pointslist.len
+#             while next_better
+#                 target = next
+#                 next = target.next
+#                 next_better = betterturn(prevedge, query.data, target.data, next.data)
+#             end
+#             return target
+#         end
+#         # otherwise, pick the better of the two remaining points
+#         return prev_better ? prev : next
+#     elseif prev_better # explore the left interval
+#         (right - left) == 0 && return prev
+#         right = middle
+#         middle = Int(floor((right - left)/2) + left)
+#         idx_change = right - middle
+#         for i=1:idx_change
+#             target = target.prev
+#         end
+#     else # explore the right interval
+#         (right - left) == 0 && return next
+#         left = middle
+#         middle = Int(ceil((right - left)/2) + left)
+#         idx_change = middle - left
+#         for i=1:idx_change
+#             target = target.next
+#         end
+#     end
 
-    return jarvisbinarysearchinterval(left, right, middle, target, query, prevedge, pointslist, betterturn)
-end
+#     return jarvisbinarysearchinterval(left, right, middle, target, query, prevedge, pointslist, betterturn)
+# end
 
 function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     mergedhull = h.hull
-    mergedpoints = mergedhull.partner
+    mergedpoints = h.points
     
     # filter out empty hulls
     hulls = filter(x->length(x.hull)>0,[h, others...])
@@ -107,33 +107,22 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
 
     # Set up copies of the hulls that point to the new points list
     hulltargets = [TargetedLinkedList(mergedpoints) for i=1:length(hulls)]
-    for (i, originalhull) in enumerate(hulls)
-        for data in originalhull.hull
-            push!(hulltargets[i], data)
+    for (originalhull,htarget) in zip(hulls,hulltargets)
+        for hullnode in ListNodeIterator(originalhull.hull)
+            push!(htarget, hullnode.data)
+            # addtarget!(tail(htarget), node)
+            tail(htarget).target = hullnode.target
         end
     end
 
     # add points from all hulls into the points list. 
-    remaininghulls = collect(1:length(hulls))
-    pointnodes = [head(x.hull.partner) for x in hulls]
-    currentnode = mergedpoints.head
-    while !isempty(remaininghulls)
-        hullidx = argmin(x->f(pointnodes[x]), remaininghulls)
-        nextnode = pointnodes[hullidx]
-        if nextnode.list !== mergedpoints
-            nextmergednode = newnode(mergedpoints, nextnode.data)
-            insertnode!(nextmergednode, currentnode)
-        end
-        if haspartner(nextnode)
-            targetingnode = getfirst(x->x.data == nextnode.data, ListNodeIterator(hulltargets[hullidx]))
-            addpartner!(targetingnode, currentnode.next)
-            nextnode.list == mergedpoints && removepartner!(nextnode)
-        end
-        currentnode = currentnode.next
-        pointnodes[hullidx] = pointnodes[hullidx].next
-        if attail(pointnodes[hullidx])
-            deleteidx = findfirst(x->x==hullidx, remaininghulls)
-            deleteat!(remaininghulls, deleteidx)
+    for originalhull in hulls
+        if originalhull !== h
+            for pointnode in ListNodeIterator(originalhull.points)
+                pointnode.list = mergedpoints
+                removetarget!(pointnode)
+                push!(mergedpoints, pointnode)
+            end
         end
     end
     
@@ -149,7 +138,7 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     # add first point to hull
     empty!(mergedhull)
     pushfirst!(mergedhull, start.data)
-    addpartner!(head(mergedhull), start.partner)
+    addtarget!(head(mergedhull), start.target)
     
     # perform jarvis march with search that makes use of the sorted nature of the hulls
     counter = 0
@@ -176,7 +165,7 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
         end
         # add the next node to the hull
         push!(mergedhull, next.data)
-        addpartner!(tail(mergedhull), next.partner)
+        addtarget!(tail(mergedhull), next.target)
         prevedge = next.data .- current.data
         current = next
     end
@@ -184,7 +173,7 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     # if these are only partial convex hulls (i.e. upper or lower), add the stopping point at the end of the hull
     if H <: Union{MutableUpperConvexHull, MutableLowerConvexHull}
         push!(mergedhull, stop.data)
-        addpartner!(tail(mergedhull), stop.partner)
+        addtarget!(tail(mergedhull), stop.target)
     end
     return h
 end
