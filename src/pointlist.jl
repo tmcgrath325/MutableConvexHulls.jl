@@ -44,7 +44,7 @@ mutable struct PointList{T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Func
     head::PointNode{T,PointList{T,R,N,F},N}
     tail::PointNode{T,PointList{T,R,N,F},N}
     top::PointNode{T, PointList{T,R,N,F},N}
-    toptail::PointNode{T, PointList{T,R,N,F}}
+    toptail::PointNode{T, PointList{T,R,N,F},N}
     function PointList{T,R,N,F}(;sortedby::F=identity, skipfactor::Int=2) where {T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Function}
         l = new{T,R,N,F}(0,1,skipfactor,sortedby)
         l.target = l

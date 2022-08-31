@@ -142,7 +142,7 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     
     # perform jarvis march with search that makes use of the sorted nature of the hulls
     counter = 0
-    current = head(mergedhull)
+    current = start
     candidates = [head(x) for x in hulltargets]
     prevedge = H <: MutableUpperConvexHull ? UP : DOWN
     while counter == 0 || current !== stop

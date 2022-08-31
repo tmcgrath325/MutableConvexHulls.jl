@@ -18,6 +18,7 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
     start.list === stop.list === h.points || throw(ArgumentError("The start and stop nodes do not belong to the appropriate list."))
+    @show h.points
     # exclude or include collinear points on the hull
     wrongturn(args...) = h.collinear ? !isorientedturn(h.orientation, args...) : !isshorterturn(h.orientation, args...)
     # perform monotone chain algorithm
