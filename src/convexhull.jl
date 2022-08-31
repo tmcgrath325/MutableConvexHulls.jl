@@ -182,17 +182,17 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
     return h
 end
 
-function mergepoints!(h::MutableConvexHull{T}, points::T...) where T
+function mergepoints!(h::MutableConvexHull{T}, points::AbstractVector{T}) where T
     h2 = monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
     mergehulls!(h,h2)
     return h
 end
-function mergepoints!(h::MutableLowerConvexHull{T}, points::T...) where T
+function mergepoints!(h::MutableLowerConvexHull{T}, points::AbstractVector{T}) where T
     h2 = lower_monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
     mergehulls!(h,h2)
     return h
 end
-function mergepoints!(h::MutableUpperConvexHull{T}, points::T...) where T
+function mergepoints!(h::MutableUpperConvexHull{T}, points::AbstractVector{T}) where T
     h2 = upper_monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
     mergehulls!(h,h2)
     return h

@@ -18,9 +18,8 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
     start.list === stop.list === h.points || throw(ArgumentError("The start and stop nodes do not belong to the appropriate list."))
-    @show h.points
     # exclude or include collinear points on the hull
-    wrongturn(args...) = h.collinear ? !isorientedturn(h.orientation, args...) : !isshorterturn(h.orientation, args...)
+    wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
     # perform monotone chain algorithm
     hullnode = hastarget(start) ? start.target : h.hull.head
     len = length(h.points) == 0 || start === firstpoint(h) ? 0 : 1
@@ -59,7 +58,7 @@ function monotonechain!(h::MutableConvexHull{T},
     length(h) > 0 && deletenode!(head(h.hull))    
     length(h) > 0 && deletenode!(tail(h.hull))    
     # exclude or include collinear points on the hull
-    wrongturn(args...) = h.collinear ? !isorientedturn(h.orientation, args...) : !isshorterturn(h.orientation, args...)
+    wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
     # obtain the lower convex hull
     onlowerhull = fill(false, h.points.len)
     hullnode = h.hull.head
@@ -115,7 +114,6 @@ function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    # push!(pointslist, points...)
     for p in points
         push!(pointslist,p)
     end
@@ -123,13 +121,11 @@ function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
     monotonechain!(h)
     return h
 end
-lower_monotonechain(points::NTuple{N,T}; kwargs...) where {N,T} = lower_monotonechain([points...]; kwargs...)
 
 function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    # push!(pointslist, points...)
     for p in points
         push!(pointslist,p)
     end
@@ -137,16 +133,13 @@ function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
     monotonechain!(h)
     return h
 end
-upper_monotonechain(points::NTuple{N,T}; kwargs...) where {N,T} = upper_monotonechain([points...]; kwargs...)
 
 function monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    # push!(pointslist, points...)
     h = MutableConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     monotonechain!(h)
     return h
 end
-monotonechain(points::NTuple{N,T}; kwargs...) where {N,T} = monotonechain([points...]; kwargs...)
 

@@ -20,7 +20,7 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
     end
 
     # use the appropriate check for determining a better option for the next point
-    betterturn(args...) = h.collinear ? iscloserturn(!h.orientation, args...) : isfurtherturn(!h.orientation, args...)
+    betterturn(prevedge,o,a,b) = h.collinear ? iscloserturn(!h.orientation,prevedge,o,a,b) : isfurtherturn(!h.orientation,prevedge,o,a,b)
 
     # perform jarvis march 
     counter = 0

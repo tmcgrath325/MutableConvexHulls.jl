@@ -103,7 +103,7 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
 
     # prepare sorting function and orientation test
     f = x -> h.sortedby(x.data)
-    betterturn(args...) = h.collinear ? iscloserturn(!h.orientation, args...) : isfurtherturn(!h.orientation, args...)
+    betterturn(prevedge,o,a,b) = h.collinear ? iscloserturn(!h.orientation,prevedge,o,a,b) : isfurtherturn(!h.orientation,prevedge,o,a,b)
 
     # Set up copies of the hulls that point to the new points list
     hulltargets = [TargetedLinkedList(mergedpoints) for i=1:length(hulls)]
