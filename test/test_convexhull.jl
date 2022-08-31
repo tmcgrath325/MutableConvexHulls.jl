@@ -47,7 +47,7 @@
                 for scoords in splitcoords
                     append!(mergedcoords, scoords)
                     for h in hulls
-                        mergepoints!(h, scoords...)
+                        mergepoints!(h, scoords)
                         @test h == lower_jarvismarch(mergedcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
                     end
                 end
@@ -119,7 +119,7 @@
                 for scoords in splitcoords
                     append!(mergedcoords, scoords)
                     for h in hulls
-                        mergepoints!(h, scoords...)
+                        mergepoints!(h, scoords)
                         @test h == upper_jarvismarch(mergedcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
                     end
                 end
@@ -191,7 +191,7 @@
                 for scoords in splitcoords
                     append!(mergedcoords, scoords)
                     for h in hulls
-                        mergepoints!(h, scoords...)
+                        mergepoints!(h, scoords)
                         @test h == jarvismarch(mergedcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
                     end
                 end

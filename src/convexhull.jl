@@ -197,6 +197,7 @@ function mergepoints!(h::MutableUpperConvexHull{T}, points::AbstractVector{T}) w
     mergehulls!(h,h2)
     return h
 end
+mergepoints!(h::AbstractConvexHull, points::Matrix) = mergepoints!(h, [(points[i,:]...,) for i=1:size(points,1)])
 
 function removepoint!(h::AbstractConvexHull{T}, node::HullNode{T}) where T
     node.list !== h.hull && throw(ArgumentError("The specified node must belong to the provided convex hull"))
