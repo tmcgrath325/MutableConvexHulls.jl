@@ -60,14 +60,11 @@ function monotonechain!(h::MutableConvexHull{T},
     # exclude or include collinear points on the hull
     wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
     # obtain the lower convex hull
-    # onlowerhull = fill(false, h.points.len)
     lowerhullidxs = Int[]
     hullnode = h.hull.head
     len = 0
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
         while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
-            # removedindex = findlast(onlowerhull)
-            # onlowerhull[removedindex] = false
             pop!(lowerhullidxs)
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
@@ -84,19 +81,10 @@ function monotonechain!(h::MutableConvexHull{T},
                 hullnode = hullnode.next
             end
         end
-        # onlowerhull[i] = i==1 ? false : true
         i !== 1 && push!(lowerhullidxs, i)
         len += 1
     end
 
-    # @show lowerhullidxs
-    # onlowerhull = fill(false, h.points.len)
-    # for lidx in lowerhullidxs
-    #     onlowerhull[lidx] = true
-    # end
-    # reverse!(onlowerhull)
-    # @show onlowerhull
-    # obtain the upper convex hull
     lidx = length(lowerhullidxs)
     len = 1
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=(h.orientation===CCW)))
