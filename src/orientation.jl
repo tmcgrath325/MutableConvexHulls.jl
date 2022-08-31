@@ -44,19 +44,27 @@ function isvalidturn(orientation::HullOrientation, condition::Function, oa, ob)
     oriented = orientation === CCW ? (cp >= 0) : (cp <= 0)
     return oriented && condition(cp, oa, ob)
 end
-isvalidturn(orientation::HullOrientation, condition::Function, o, a, b) = isvalidturn(orientation, condition, a .- o, b .- o)
+isvalidturn(orientation::HullOrientation, condition::Function, o, a, b) = isvalidturn(orientation, condition, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]))
 
 # colinear vectors will always yield `true`
-isorientedturn(orientation::HullOrientation, args...) = isvalidturn(orientation, (cp,v1,v2)->true, args...)
+isorientedturn(orientation::HullOrientation, oa, ob) = isvalidturn(orientation, (cp,v1,v2)->true, oa, ob)
+isorientedturn(orientation::HullOrientation, o, a, b) = isorientedturn(orientation, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]))
+
 
 # colinear vectors will only yield `true` if they are aligned (dot product > 0). This is typically only useful with sorted points
-isalignedturn(orientation, args...) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : isaligned(oa,ob)), args...)
+isalignedturn(orientation, oa, ob) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : isaligned(oa,ob)), oa, ob)
+isalignedturn(orientation, o, a, b) = isalignedturn(orientation, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]))
+
 
 # colinear vectors will only yield `true` if the second is shorter than the first. This is typically only useful with sorted points
-isshorterturn(orientation, args...) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : sum(abs2,oa) > sum(abs2,ob)), args...)
+isshorterturn(orientation, oa, ob) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : sum(abs2,oa) > sum(abs2,ob)), oa, ob)
+isshorterturn(orientation, o, a, b) = isshorterturn(orientation, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]))
+
 
 # colinear vectors will only yield 'true' if they are aligned and if the second vector moves less than the first (relative to the direction of the previous edge)
-iscloserturn(orientation, prevedge, args...) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : isalignedcloser(orientation,prevedge,oa,ob)), args...)
+iscloserturn(orientation, prevedge, oa, ob) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : isalignedcloser(orientation,prevedge,oa,ob)), oa, ob)
+iscloserturn(orientation, prevedge, o, a, b) = iscloserturn(orientation, prevedge, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]))
 
 # colinear vectors will only yield 'true' if they are aligned and if the second vector moves further than the first (relative to the direction of the previous edge)
-isfurtherturn(orientation, prevedge, args...) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : isalignedfurther(orientation,prevedge,oa,ob)), args...)
+isfurtherturn(orientation, prevedge, oa, ob) = isvalidturn(orientation, (cp, oa, ob) -> (cp != 0 ? true : isalignedfurther(orientation,prevedge,oa,ob)), oa, ob)
+isfurtherturn(orientation, prevedge, o, a, b) = isfurtherturn(orientation, prevedge, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]))
