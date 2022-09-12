@@ -1,6 +1,24 @@
 using MutableConvexHulls
+using PairedLinkedLists
 using Test
+using Random
+const MCH = MutableConvexHulls
 
-@testset "MutableConvexHulls.jl" begin
-    # Write your tests here.
+Random.seed!(1234)
+
+tests = ["orientation",
+         "monotonechain",
+         "jarvismarch",
+         "convexhull",
+        ]
+
+@testset "MutableConvexHulls" begin
+
+for t in tests
+    fp = joinpath(dirname(@__FILE__), "test_$t.jl")
+    println("$fp ...")
+    include(fp)
 end
+
+end
+
