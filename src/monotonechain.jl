@@ -1,18 +1,36 @@
+""" 
+    node = firstpoint(h)
+
+Get the first point on `h.points` that should be considered for the monotone chain algorithm.
+"""
 firstpoint(h::Union{MutableConvexHull, MutableLowerConvexHull}) = h.orientation === CCW ? h.points.head.next : h.points.tail.prev
 firstpoint(h::MutableUpperConvexHull) =  h.orientation === CCW ? h.points.tail.prev : h.points.head.next
 
+""" 
+    node = lastpoint(h)
+
+Get the last point on `h.points` that should be considered for the monotone chain algorithm.
+"""
 lastpoint(h::Union{MutableConvexHull, MutableLowerConvexHull}) = h.orientation === CCW ? h.points.tail.prev : h.points.head.next
 lastpoint(h::MutableUpperConvexHull) = h.orientation === CCW ? h.points.head.next : h.points.tail.prev
 
+""" 
+    buildinreverse(h) -> Bool
+
+Return `true` if the monotonechain algorithm should start at the last point in `h.points`, and `false` otherwise.
+"""
 buildinreverse(h::Union{MutableConvexHull, MutableLowerConvexHull}) = h.orientation === CW
 buildinreverse(h::MutableUpperConvexHull) = h.orientation === CCW
 
 """
-    lh = lower_monotonechain!(hull [, stop])
+    monotonechain!(hull [, start, stop])
 
-Return the lower convex hull of the points contained in the provided `list` using the [monotone chain algorithm](https://doi.org/10.1016/0020-0190(79)90072-3). 
+Determine the convex hull of the points contained in the provided `hull.points` using the [monotone chain algorithm](https://doi.org/10.1016/0020-0190(79)90072-3). 
 Each node in the list should contain a two-dimensional point, and the nodes are assumed to be sorted 
 (e.g. by lowest "x" value and by lowest "y" in case of ties, though some other sorting methods may produce valid results).
+
+`start` and `stop` should be nodes contained in `hull.points`. If `start` and/or `stop` are provided, the convex hull will only be updated on the inclusive interval
+between `start` and `stop`. This allows efficient removal of points from a convex hull.
 """
 function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull},
                         start::PointNode{T} = firstpoint(h),
@@ -44,13 +62,6 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
     return h
 end
 
-"""
-    h = monotonechain!(list::PairedLinkedList)
-
-Return the convex hull of the points contained in the provided `list` using the [monotone chain algorithm](https://doi.org/10.1016/0020-0190(79)90072-3). 
-Each node in the list should contain a two-dimensional point, and the nodes are assumed to be sorted 
-(e.g. by lowest "x" value and by lowest "y" in case of ties, though some other sorting methods may produce valid results).
-"""
 function monotonechain!(h::MutableConvexHull{T},
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
@@ -92,7 +103,6 @@ function monotonechain!(h::MutableConvexHull{T},
             lidx -= 1
             continue
         end 
-        # islower && continue
         while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
@@ -112,6 +122,17 @@ function monotonechain!(h::MutableConvexHull{T},
     return h
 end
 
+"""
+    lh = lower_monotonechain(points [; orientation, collinear, sortedby])
+
+Return the lower convex hull generated from the provided `points`.
+
+`orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
+
+`collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
+
+`sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
+"""
 function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
@@ -125,6 +146,17 @@ function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
 end
 lower_monotonechain(points::Matrix; kwargs...) = lower_monotonechain([(points[i,:]...,) for i=1:size(points,1)])
 
+"""
+    uh = upper_monotonechain(points [; orientation, collinear, sortedby])
+
+Return the upper convex hull generated from the provided `points`.
+
+`orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
+
+`collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
+
+`sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
+"""
 function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
@@ -138,6 +170,17 @@ function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
 end
 upper_monotonechain(points::Matrix; kwargs...) = upper_monotonechain([(points[i,:]...,) for i=1:size(points,1)])
 
+"""
+    h = monotonechain(points [; orientation, collinear, sortedby])
+
+Return the convex hull generated from the provided `points`.
+
+`orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
+
+`collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
+
+`sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
+"""
 function monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()

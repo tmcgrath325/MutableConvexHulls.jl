@@ -1,8 +1,6 @@
 using PairedLinkedLists: AbstractPairedListNode, AbstractPairedSkipNode, AbstractPairedLinkedList, AbstractPairedSkipList
 
 abstract type AbstractHullNode{T,L,F} <: AbstractPairedListNode{T,L} end
-# abstract type AbstractPointNode{T,L} <: AbstractPairedSkipNode{T,L} end
-
 abstract type AbstractHullList{T,F} <: AbstractPairedLinkedList{T} end
 abstract type AbstractPointList{T,R,N,F} <: AbstractPairedSkipList{T,F} end
 
@@ -133,7 +131,6 @@ function HullList{T,F}(elts...) where {T,F}
 end
 
 PointList{T}(;sortedby::F=identity, kwargs...) where {T,F<:Function} = PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}(;sortedby=sortedby,kwargs...)
-#  PointList{T,F}() where {T,F<:Function} = PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}()
 function PointList{T,R,N,F}(elts...) where {T,R,N,F}
     l = PointList{T,R,N,F}()
     for elt in elts

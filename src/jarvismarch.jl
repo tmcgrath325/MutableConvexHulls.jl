@@ -12,6 +12,13 @@ function jarvissearch(query::AbstractNode{T}, prevedge, pointsnodes, betterturn:
     return next
 end
 
+"""
+    jarvismarch!(hull [, initedge, stop])
+
+Determine the convex hull of the points contained in the provided `hull.points` using the [Jarvis march algorithm](https://en.wikipedia.org/wiki/Gift_wrapping_algorithm). 
+Each node in the list should contain a two-dimensional point, and the nodes are assumed to be sorted 
+(e.g. by lowest "x" value and by lowest "y" in case of ties, though some other sorting methods may produce valid results).
+"""
 function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{T},Nothing}=nothing) where T
     pointslist = h.hull.target
     hull = h.hull
@@ -133,6 +140,17 @@ function jarvismarch!(h::MutableUpperConvexHull)
     return h
 end
 
+"""
+    h = jarvismarch(points [; orientation, collinear, sortedby])
+
+Return the convex hull generated from the provided `points`.
+
+`orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
+
+`collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
+
+`sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
+"""
 function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
@@ -143,6 +161,17 @@ function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW
     return h
 end
 
+"""
+    lh = lower_jarvismarch(points [; orientation, collinear, sortedby])
+
+Return the lower convex hull generated from the provided `points`.
+
+`orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
+
+`collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
+
+`sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
+"""
 function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
@@ -153,6 +182,17 @@ function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientati
     return h
 end
 
+"""
+    uh = upper_jarvismarch(points [; orientation, collinear, sortedby])
+
+Return the upper convex hull generated from the provided `points`.
+
+`orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
+
+`collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
+
+`sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
+"""
 function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()

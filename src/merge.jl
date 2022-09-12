@@ -17,6 +17,8 @@ function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractL
     return tail(pointslist)
 end
 
+# Note: binary search is a bad idea for linked lists
+
 # function jarvisbinarysearch(query::PointNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
 #     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
 #     pointslist.len == 1 && return head(pointslist)
@@ -92,6 +94,12 @@ end
 #     return jarvisbinarysearchinterval(left, right, middle, target, query, prevedge, pointslist, betterturn)
 # end
 
+"""
+    mergehulls!(hull, otherhulls...)
+
+Merge the points contained in `otherhulls` into `hull`. See [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm)
+for a similar approach.
+"""
 function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     mergedhull = h.hull
     mergedpoints = h.points

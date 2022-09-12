@@ -1,3 +1,8 @@
+"""
+    insidehull(data, hull) -> Bool
+
+Return `true` if the data lies within the interior of `hull` and `false` otherwise.
+"""
 function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
     length(h) == 0 && return false
     length(h) == 1 && return pointdata == h.hull.head.next.data
