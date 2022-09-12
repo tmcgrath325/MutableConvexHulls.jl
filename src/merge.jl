@@ -174,7 +174,7 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
         # add the next node to the hull
         push!(mergedhull, next.data)
         addtarget!(tail(mergedhull), next.target)
-        prevedge = next.data .- current.data
+        prevedge = (next.data[1] - current.data[1], next.data[2] - current.data[2])
         current = next
     end
 
