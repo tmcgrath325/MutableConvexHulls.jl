@@ -35,20 +35,31 @@ between `start` and `stop`. This allows efficient removal of points from a conve
 function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull},
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
+    if isempty(h.points)
+        empty!(h.hull)
+        return h
+    end
     start.list === stop.list === h.points || throw(ArgumentError("The start and stop nodes do not belong to the appropriate list."))
     # exclude or include collinear points on the hull
     wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
-    # perform monotone chain algorithm
-    hullnode = hastarget(start) ? start.target : h.hull.head
-    len = length(h.points) == 0 || start === firstpoint(h) ? 0 : 1
+    # get a list of point nodes to be added to the hull
+    nodestoadd = typeof(start)[]
+    start === firstpoint(h) && push!(nodestoadd, start)
+    # len = length(h.points) == 0 || start === firstpoint(h) ? 0 : 1
     for node in ListNodeIterator(start; rev=buildinreverse(h))
-        if hullnode !== node.target
-            while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
-                hullnode = hullnode.prev
-                deletenode!(hullnode.next)
-                len -= 1
+        if !isempty(nodestoadd) && nodestoadd[end] !== node
+            while length(nodestoadd) >= 2 && wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
+                removednode = nodestoadd[end]
+                hastarget(removednode) && deletenode!(removednode.target)
+                pop!(nodestoadd)
             end
         end
+        push!(nodestoadd, node)
+        node === stop && break
+    end
+    # add the appropriate point nodes to the hull
+    hullnode = hastarget(start) ? start.target : h.hull.head
+    for node in nodestoadd
         if !hastarget(node) # avoid overwriting the targets for points already on the hull
             insertafter!(newnode(h.hull, node.data), hullnode)
             hullnode = hullnode.next
@@ -56,8 +67,6 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
         else
             hullnode = node.target
         end
-        node === stop && break
-        len += 1
     end
     return h
 end
@@ -65,6 +74,10 @@ end
 function monotonechain!(h::MutableConvexHull{T},
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
+    if isempty(h.points)
+        empty!(h.hull)
+        return h
+    end
     # remove extreme points from the hull (allows them to switch ends in the case of certain deletions)
     length(h) > 0 && deletenode!(head(h.hull))    
     length(h) > 0 && deletenode!(tail(h.hull))    

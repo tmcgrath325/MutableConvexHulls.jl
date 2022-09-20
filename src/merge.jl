@@ -127,8 +127,10 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     for originalhull in hulls
         if originalhull !== h
             for pointnode in ListNodeIterator(originalhull.points)
-                pointnode.list = mergedpoints
                 removetarget!(pointnode)
+                pointnode.list = mergedpoints
+                pointnode.up = pointnode
+                pointnode.down = pointnode
                 push!(mergedpoints, pointnode)
             end
         end
