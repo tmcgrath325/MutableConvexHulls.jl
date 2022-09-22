@@ -20,6 +20,7 @@ include("inside.jl")
 include("merge.jl")
 
 export MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull
+export ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull
 export HullList, PointList, HullNode, PointNode
 export addpoint!, mergepoints!, removepoint!
 export HullNodeIterator, PointNodeIterator

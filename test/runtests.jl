@@ -10,6 +10,7 @@ tests = ["orientation",
          "monotonechain",
          "jarvismarch",
          "convexhull",
+         "chanhull",
         ]
 
 @testset "MutableConvexHulls" begin

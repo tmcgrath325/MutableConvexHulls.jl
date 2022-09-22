@@ -141,14 +141,15 @@ end
 mergehulls(h::H, others::H...) where H <: AbstractConvexHull = mergehulls!(copy(h), others...)
 
 function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)  
+    isempty(hulltargets) && return empty!(mergedhull)
     # determine starting and stopping points
     f = x -> sortedby(x.data)
     start = rev ? argmax(f, [head(x) for x in hulltargets]) :
-                                argmin(f, [head(x) for x in hulltargets])
+                  argmin(f, [head(x) for x in hulltargets])
     stop = start
     if partial
         stop = rev ? argmin(f, [tail(x) for x in hulltargets]) :
-                                   argmax(f, [tail(x) for x in hulltargets])
+                     argmax(f, [tail(x) for x in hulltargets])
     end
 
     maxlength = sum(x->length(x), hulltargets)
@@ -175,7 +176,7 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
         counter += 1
         for (i, ht) in enumerate(hulltargets)
             candidates[i] = (current.list === ht && (collinear || !targetscollinear[i])) ?      # If the current point belongs to the list being considered, we already know 
-                attail(current.next) ? head(ht) : current.next :                                # its candidate point as long as it doesn't contain extraneous collinear points
+                (attail(current.next) ? head(ht) : current.next) :                              # its candidate point as long as it doesn't contain extraneous collinear points
                 jarvissortedsearch(current, prevedge, ht, betterturn)
         end
         next = jarvissearch(current, prevedge, candidates, betterturn)
@@ -203,7 +204,7 @@ end
 
 function merge_hull_lists!(h::AbstractChanConvexHull)
     mergedhull = h.hull
-    hulltargets = [hl.hull for hl in h.subhulls]
+    hulltargets = filter(!isempty, [hl.hull for hl in h.subhulls])
     rev = buildinreverse(h.subhulls[1])
     targetscollinear = fill(h.collinear, length(h.subhulls))
     upper = eltype(h.subhulls) <: MutableUpperConvexHull
