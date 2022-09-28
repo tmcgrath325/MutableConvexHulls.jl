@@ -22,6 +22,16 @@ Return `true` if the monotonechain algorithm should start at the last point in `
 buildinreverse(h::Union{MutableConvexHull, MutableLowerConvexHull}) = h.orientation === CW
 buildinreverse(h::MutableUpperConvexHull) = h.orientation === CCW
 
+function lastdifferentcoord(nodestoadd::Vector{PointNode{T}}) where T
+    o = nodestoadd[end-1].data
+    for i=length(nodestoadd):-1:2
+        a = nodestoadd[i].data
+        o = nodestoadd[i-1].data
+        !coordsareequal(a,o) && break
+    end
+    return o
+end
+
 """
     monotonechain!(hull [, start, stop])
 
@@ -43,11 +53,13 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
     # exclude or include collinear points on the hull
     wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
     # get a list of point nodes to be added to the hull
-    nodestoadd = typeof(start)[]
+    nodestoadd = PointNode{T}[]
     start === firstpoint(h) && push!(nodestoadd, start)
     for node in ListNodeIterator(start; rev=buildinreverse(h))
         if !isempty(nodestoadd) && nodestoadd[end] !== node
-            while length(nodestoadd) >= 2 && wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
+            while length(nodestoadd) >= 2 # && wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
+                o = h.collinear ? lastdifferentcoord(nodestoadd) : nodestoadd[end-1].data
+                !wrongturn(o, nodestoadd[end].data, node.data) && break
                 removednode = nodestoadd[end]
                 hastarget(removednode) && deletenode!(removednode.target)
                 pop!(nodestoadd)
@@ -70,6 +82,7 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
     return h
 end
 
+# TO DO: implement use of start and stop arguments, and avoid unecessary node constructor calls
 function monotonechain!(h::MutableConvexHull{T},
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
