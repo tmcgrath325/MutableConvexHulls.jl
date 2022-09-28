@@ -13,12 +13,14 @@ include("utils.jl")
 include("orientation.jl")
 include("pointlist.jl")
 include("convexhull.jl")
+include("chanhull.jl")
 include("monotonechain.jl")
 include("jarvismarch.jl")
 include("inside.jl")
 include("merge.jl")
 
 export MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull
+export ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull
 export HullList, PointList, HullNode, PointNode
 export addpoint!, mergepoints!, removepoint!
 export HullNodeIterator, PointNodeIterator

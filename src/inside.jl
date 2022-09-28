@@ -5,7 +5,7 @@ Return `true` if the data lies within the interior of `hull` and `false` otherwi
 """
 function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
     length(h) == 0 && return false
-    length(h) == 1 && return pointdata == h.hull.head.next.data
+    length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
 
     abovelower = false
     belowupper = false
@@ -25,7 +25,7 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
                 # if the point lies along the extreme left or right edge of the entire hull...
                 if pointdata[1] == prevnode.data[1] == nextnode.data[1] 
                     if h.collinear 
-                        abovelower = (pointdata == nextnode.data || pointdata == prevnode.data) 
+                        abovelower = (coordsareequal(pointdata, nextnode.data) || coordsareequal(pointdata, prevnode.data)) 
                     else
                         abovelower = nextnode.data[2] >= prevnode.data[2] ? prevnode.data[2] <= pointdata[2] <= nextnode.data[2] :
                                                                             prevnode.data[2] >= pointdata[2] >= nextnode.data[2]
@@ -52,7 +52,7 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
             # if the point lies along the extreme left or right edge of the entire hull...
             if pointdata[1] == prevnode.data[1] == nextnode.data[1]
                 if h.collinear 
-                    belowupper = (pointdata == nextnode.data || pointdata == prevnode.data) 
+                    belowupper = (coordsareequal(pointdata, nextnode.data) || coordsareequal(pointdata, prevnode.data)) 
                 else
                     belowupper = nextnode.data[2] >= prevnode.data[2] ? prevnode.data[2] <= pointdata[2] <= nextnode.data[2] :
                                                                         prevnode.data[2] >= pointdata[2] >= nextnode.data[2]
@@ -79,7 +79,7 @@ end
 
 function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
     length(h) == 0 && return false
-    length(h) == 1 && return pointdata == h.hull.head.next.data
+    length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
     ccw = h.orientation === CCW
 
     # handle cases where the new point is tied with an extreme point with respect to the first coordinate
@@ -87,7 +87,7 @@ function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
     if pointdata[1] == hhead.data[1]
         lastleftnode = hhead
         for leftnode in ListNodeIterator(h.hull)
-            leftnode.data == pointdata && return true
+            coordsareequal(leftnode.data, pointdata) && return !h.collinear
             leftnode.data[1] != hhead.data[1] && break
             lastleftnode = leftnode
         end
@@ -100,7 +100,7 @@ function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
     if pointdata[1] == htail.data[1]
         firstrightnode = htail
         for rightnode in ListNodeIterator(h.hull; rev=true)
-            rightnode.data == pointdata && return true
+            coordsareequal(rightnode.data, pointdata) && return !h.collinear
             rightnode.data[1] != htail.data[1] && break
             firstrightnode = rightnode
         end
@@ -126,7 +126,7 @@ end
 
 function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
     length(h) == 0 && return false
-    length(h) == 1 && return pointdata == h.hull.head.next.data
+    length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
     ccw = h.orientation == CCW
 
     # handle cases where the new point is tied with an extreme point with respect to the first coordinate
@@ -134,7 +134,7 @@ function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
     if pointdata[1] == hhead.data[1]
         lastleftnode = hhead
         for leftnode in ListNodeIterator(h.hull)
-            leftnode.data == pointdata && return true
+            coordsareequal(leftnode.data, pointdata) && return !h.collinear
             leftnode.data[1] != hhead.data[1] && break
             lastleftnode = leftnode
         end
@@ -147,7 +147,7 @@ function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
     if pointdata[1] == htail.data[1]
         firstrightnode = htail
         for rightnode in ListNodeIterator(h.hull; rev=true)
-            rightnode.data == pointdata && return true
+            coordsareequal(rightnode.data, pointdata) && return !h.collinear
             rightnode.data[1] != htail.data[1] && break
             firstrightnode = rightnode
         end
