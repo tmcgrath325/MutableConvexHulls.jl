@@ -93,8 +93,6 @@ using MutableConvexHulls: isorientedturn_vec, isalignedturn_vec, iscloserturn_ve
                                 @test closer_left_result == further_left_result == isorientedturn_vec(CCW, prev, ob, ab)
                                 @test closer_right_result == further_right_result == isorientedturn_vec(CW, prev, ob, ab)
                             end
-                            # @show prev, oa, ob
-                            # sleep(0.1)
                         elseif abs(anglediff) ≈ 0
                             lensq1 = sum(abs2, oa)
                             lensq2 = sum(abs2, ob)

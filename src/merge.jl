@@ -1,13 +1,13 @@
-function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
+function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function, collinear::Bool)
     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
     pointslist.len == 1 && return head(pointslist)
     head(pointslist).data == tail(pointslist).data && throw(ArgumentError("All points in the list are duplicates."))
-
     prev_worse = betterturn(prevedge, query.data, tail(pointslist).data, head(pointslist).data)
     for target in ListNodeIterator(pointslist)
-        if query.data == target.next.data
+        if coordsareequal(target.next.data, query.data)
             continue
         end
+        # since points are sorted, the next point should present a "better turn" than the preceding or following points
         next_worse = !betterturn(prevedge, query.data, target.data, target.next.data)
         if prev_worse && next_worse
             return target
@@ -171,16 +171,17 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
     prevedge = upper ? UP : DOWN
     while counter == 0 || current !== stop
         if counter > maxlength
+            @show [(x[1], x[2]) for x in mergedhull]
             throw(ErrorException("More points were added to the hull than exist in the original hulls to be merged."))
         end
         counter += 1
         for (i, ht) in enumerate(hulltargets)
             candidates[i] = (current.list === ht && (collinear || !targetscollinear[i])) ?      # If the current point belongs to the list being considered, we already know 
                 (attail(current.next) ? head(ht) : current.next) :                              # its candidate point as long as it doesn't contain extraneous collinear points
-                jarvissortedsearch(current, prevedge, ht, betterturn)
+                jarvissortedsearch(current, prevedge, ht, betterturn, collinear)
         end
-        next = jarvissearch(current, prevedge, candidates, betterturn)
-        if current == next
+        next = jarvissearch(current, prevedge, candidates, betterturn, collinear)
+        if current === next
             throw(ErrorException("Jarvis March failed to progress."))
         end
         # stop adding points when the stopping point has been reached

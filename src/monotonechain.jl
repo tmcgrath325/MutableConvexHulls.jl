@@ -22,16 +22,6 @@ Return `true` if the monotonechain algorithm should start at the last point in `
 buildinreverse(h::Union{MutableConvexHull, MutableLowerConvexHull}) = h.orientation === CW
 buildinreverse(h::MutableUpperConvexHull) = h.orientation === CCW
 
-function lastdifferentcoord(nodestoadd::Vector{PointNode{T}}) where T
-    o = nodestoadd[end-1].data
-    for i=length(nodestoadd):-1:2
-        a = nodestoadd[i].data
-        o = nodestoadd[i-1].data
-        !coordsareequal(a,o) && break
-    end
-    return o
-end
-
 """
     monotonechain!(hull [, start, stop])
 
@@ -58,15 +48,24 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
     for node in ListNodeIterator(start; rev=buildinreverse(h))
         if !isempty(nodestoadd) && nodestoadd[end] !== node
             while length(nodestoadd) >= 2 # && wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
-                o = h.collinear ? lastdifferentcoord(nodestoadd) : nodestoadd[end-1].data
-                !wrongturn(o, nodestoadd[end].data, node.data) && break
+                if coordsareequal(nodestoadd[end-1].data, nodestoadd[end].data) || wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
+                    removednode = nodestoadd[end]
+                    hastarget(removednode) && deletenode!(removednode.target)
+                    pop!(nodestoadd)
+                else
+                    break
+                end
+            end
+        end
+        push!(nodestoadd, node)
+        if node === stop
+            if length(nodestoadd) >= 2 && coordsareequal(nodestoadd[end-1].data, stop.data)
                 removednode = nodestoadd[end]
                 hastarget(removednode) && deletenode!(removednode.target)
                 pop!(nodestoadd)
             end
+            break
         end
-        push!(nodestoadd, node)
-        node === stop && break
     end
     # add the appropriate point nodes to the hull
     hullnode = hastarget(start) ? start.target : h.hull.head
@@ -100,7 +99,7 @@ function monotonechain!(h::MutableConvexHull{T},
     hullnode = h.hull.head
     len = 0
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
-        while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
+        while len >= 2 && (wrongturn(hullnode.prev.data, hullnode.data, node.data) || coordsareequal(hullnode.data, node.data))
             pop!(lowerhullidxs)
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
