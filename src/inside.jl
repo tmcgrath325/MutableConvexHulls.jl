@@ -87,7 +87,7 @@ function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
     if pointdata[1] == hhead.data[1]
         lastleftnode = hhead
         for leftnode in ListNodeIterator(h.hull)
-            coordsareequal(leftnode.data, pointdata) && return !h.collinear
+            coordsareequal(leftnode.data, pointdata) && return true
             leftnode.data[1] != hhead.data[1] && break
             lastleftnode = leftnode
         end
@@ -100,7 +100,7 @@ function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
     if pointdata[1] == htail.data[1]
         firstrightnode = htail
         for rightnode in ListNodeIterator(h.hull; rev=true)
-            coordsareequal(rightnode.data, pointdata) && return !h.collinear
+            coordsareequal(rightnode.data, pointdata) && return true
             rightnode.data[1] != htail.data[1] && break
             firstrightnode = rightnode
         end
@@ -134,7 +134,7 @@ function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
     if pointdata[1] == hhead.data[1]
         lastleftnode = hhead
         for leftnode in ListNodeIterator(h.hull)
-            coordsareequal(leftnode.data, pointdata) && return !h.collinear
+            coordsareequal(leftnode.data, pointdata) && return true
             leftnode.data[1] != hhead.data[1] && break
             lastleftnode = leftnode
         end
@@ -147,7 +147,7 @@ function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
     if pointdata[1] == htail.data[1]
         firstrightnode = htail
         for rightnode in ListNodeIterator(h.hull; rev=true)
-            coordsareequal(rightnode.data, pointdata) && return !h.collinear
+            coordsareequal(rightnode.data, pointdata) && return true
             rightnode.data[1] != htail.data[1] && break
             firstrightnode = rightnode
         end

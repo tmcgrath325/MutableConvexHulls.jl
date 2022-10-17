@@ -4,6 +4,7 @@
     irange = 1:10
     jrange = 1:10
     boxcoords = [(i,j) for i in irange for j in jrange]
+    dupcoords = [boxcoords..., boxcoords...]
     by = x -> (x[1], -x[2])
 
     @testset "Lower Jarvis March" begin
