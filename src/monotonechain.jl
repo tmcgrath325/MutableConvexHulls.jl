@@ -99,25 +99,27 @@ function monotonechain!(h::MutableConvexHull{T},
     hullnode = h.hull.head
     len = 0
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
-        while len >= 2 && (wrongturn(hullnode.prev.data, hullnode.data, node.data) || coordsareequal(hullnode.data, node.data))
-            pop!(lowerhullidxs)
-            hullnode = hullnode.prev
-            deletenode!(hullnode.next)
-            len -= 1
-        end
-        if !hastarget(node) # avoid overwriting the targets for points already on the hull
-            insertafter!(newnode(h.hull, node.data), hullnode)
-            hullnode = hullnode.next
-            addtarget!(hullnode, node)
-        else
-            if node.target != hullnode.next
-                continue
-            else
-                hullnode = hullnode.next
+        if len == 0 || !coordsareequal(hullnode.data, node.data)
+            while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
+                pop!(lowerhullidxs)
+                hullnode = hullnode.prev
+                deletenode!(hullnode.next)
+                len -= 1
             end
+            if !hastarget(node) # avoid overwriting the targets for points already on the hull
+                insertafter!(newnode(h.hull, node.data), hullnode)
+                hullnode = hullnode.next
+                addtarget!(hullnode, node)
+            else
+                if node.target != hullnode.next
+                    continue
+                else
+                    hullnode = hullnode.next
+                end
+            end
+            i !== 1 && push!(lowerhullidxs, i)
+            len += 1
         end
-        i !== 1 && push!(lowerhullidxs, i)
-        len += 1
     end
 
     lidx = length(lowerhullidxs)
@@ -127,20 +129,26 @@ function monotonechain!(h::MutableConvexHull{T},
             lidx -= 1
             continue
         end 
-        while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
-            hullnode = hullnode.prev
-            deletenode!(hullnode.next)
-            len -= 1
+        if !coordsareequal(hullnode.data, node.data)
+            while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
+                hullnode = hullnode.prev
+                deletenode!(hullnode.next)
+                len -= 1
+            end
+            if !hastarget(node) # avoid overwriting the targets for points already on the hull
+                addnode = newnode(h.hull, node.data)
+                insertafter!(addnode, hullnode)
+                hullnode = hullnode.next
+                addtarget!(hullnode, node)
+            else
+                hullnode = hullnode.next
+            end
+            len += 1
         end
-        if !hastarget(node) # avoid overwriting the targets for points already on the hull
-            addnode = newnode(h.hull, node.data)
-            insertafter!(addnode, hullnode)
-            hullnode = hullnode.next
-            addtarget!(hullnode, node)
-        else
-            hullnode = hullnode.next
-        end
-        len += 1
+    end
+
+    if length(h) > 1 && coordsareequal(head(h.hull).data, tail(h.hull).data)
+        deletenode!(tail(h.hull))
     end
 
     return h
