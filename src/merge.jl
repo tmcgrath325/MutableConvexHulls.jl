@@ -1,4 +1,4 @@
-function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function, collinear::Bool)
+function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
     pointslist.len == 1 && return head(pointslist)
     head(pointslist).data == tail(pointslist).data && throw(ArgumentError("All points in the list are duplicates."))
@@ -178,9 +178,9 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
         for (i, ht) in enumerate(hulltargets)
             candidates[i] = (current.list === ht && (collinear || !targetscollinear[i])) ?      # If the current point belongs to the list being considered, we already know 
                 (attail(current.next) ? head(ht) : current.next) :                              # its candidate point as long as it doesn't contain extraneous collinear points
-                jarvissortedsearch(current, prevedge, ht, betterturn, collinear)
+                jarvissortedsearch(current, prevedge, ht, betterturn)
         end
-        next = jarvissearch(current, prevedge, candidates, betterturn, collinear)
+        next = jarvissearch(current, prevedge, candidates, betterturn)
         if current === next
             throw(ErrorException("Jarvis March failed to progress."))
         end
