@@ -98,15 +98,26 @@ function monotonechain!(h::MutableConvexHull{T},
     lowerhullidxs = Int[]
     hullnode = h.hull.head
     len = 0
+    o = hullnode.data
+    a = hullnode.data
+    b = hullnode.data
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
-        while len >= 2 && (wrongturn(hullnode.prev.data, hullnode.data, node.data) || coordsareequal(hullnode.data, node.data))
+        o = hullnode.data
+        a = len == 1 ? hullnode.data : hullnode.prev.data
+        b = node.data
+        if coordsareequal(a,b)
+            continue
+        end
+        while len >= 2 && wrongturn(o, a, b)
             pop!(lowerhullidxs)
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
             len -= 1
+            o = hullnode.data
+            a = len == 1 ? hullnode.data : hullnode.prev.data
         end
         if !hastarget(node) # avoid overwriting the targets for points already on the hull
-            insertafter!(newnode(h.hull, node.data), hullnode)
+            insertafter!(newnode(h.hull, b), hullnode)
             hullnode = hullnode.next
             addtarget!(hullnode, node)
         else
@@ -116,10 +127,11 @@ function monotonechain!(h::MutableConvexHull{T},
                 hullnode = hullnode.next
             end
         end
+
         i !== 1 && push!(lowerhullidxs, i)
         len += 1
     end
-
+    
     lidx = length(lowerhullidxs)
     len = 1
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=(h.orientation===CCW)))
@@ -127,7 +139,7 @@ function monotonechain!(h::MutableConvexHull{T},
             lidx -= 1
             continue
         end 
-        while len >= 2 && wrongturn(hullnode.prev.data, hullnode.data, node.data)
+        while len >= 2 && (wrongturn(hullnode.prev.data, hullnode.data, node.data) || coordsareequal(hullnode.data, node.data))
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
             len -= 1
