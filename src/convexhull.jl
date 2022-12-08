@@ -228,6 +228,8 @@ function removepoint!(h::AbstractConvexHull{T}, node::HullNode{T}) where T
     stop = node.next.target
     deletenode!(node.target)
     deletenode!(node)
+    @show h.hull
+    @show h.points
     start = start.list === h.points ? start : firstpoint(h)
     stop = stop.list === h.points ? stop : lastpoint(h)
     monotonechain!(h, start, stop)
@@ -241,6 +243,8 @@ function removepoint!(h::AbstractConvexHull{T}, node::PointNode{T}) where T
         stop = node.target.next.target
         deletenode!(node.target)
         deletenode!(node)
+        @show h.hull
+        @show h.points
         start = start.list === h.points ? start : firstpoint(h)
         stop = stop.list === h.points ? stop : lastpoint(h)
         monotonechain!(h, start, stop)

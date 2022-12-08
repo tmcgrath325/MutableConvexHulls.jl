@@ -213,6 +213,14 @@
                     for h in hulls
                         removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.target)))
                         @test h == jarvismarch(shuffledcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+                        if h != jarvismarch(shuffledcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+                            @show shuffledcoords
+                            @show removeddata
+                            @show h.orientation, h.collinear, h.sortedby
+                            @show h.hull
+                            @show h.points
+                            sleep(1)
+                        end
                     end
                 end
             end

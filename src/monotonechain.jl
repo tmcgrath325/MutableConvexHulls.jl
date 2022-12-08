@@ -88,69 +88,127 @@ function monotonechain!(h::MutableConvexHull{T},
     if isempty(h.points)
         empty!(h.hull)
         return h
+    elseif length(h.points) == 1
+        empty!(h.hull)
+        insertafter!(newnode(h.hull, head(h.points).data), h.hull.head)
+        addtarget!(head(h.hull), head(h.points))
+        return h
     end
     # remove extreme points from the hull (allows them to switch ends in the case of certain deletions)
     length(h) > 0 && deletenode!(head(h.hull))    
     length(h) > 0 && deletenode!(tail(h.hull))    
     # exclude or include collinear points on the hull
     wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
-    # obtain the lower convex hull
+    # obtain the lower convex hull, and keep track of duplicate coordinates
     lowerhullidxs = Int[]
+    lowerhulldups = Bool[]
     hullnode = h.hull.head
     len = 0
-    o = hullnode.data
-    a = hullnode.data
-    b = hullnode.data
+    # @show h.hull
+    # println("Forward")
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
-        o = hullnode.data
-        a = len == 1 ? hullnode.data : hullnode.prev.data
+        o = len == 1 ? hullnode.data : hullnode.prev.data
+        a = hullnode.data
         b = node.data
+        # println("   consider $(b)")
         if coordsareequal(a,b)
+            # println("      ignore equal coords: $(a), $(b)")
+            if i !== 1 
+                push!(lowerhullidxs, i)
+                push!(lowerhulldups, true)
+            end
+            if hastarget(node)
+                deletenode!(node.target)
+            end
             continue
         end
         while len >= 2 && wrongturn(o, a, b)
+            # println("      remove $(a)")
+            while(lowerhulldups[end])
+                pop!(lowerhulldups)
+                pop!(lowerhullidxs)
+            end
             pop!(lowerhullidxs)
+            pop!(lowerhulldups)
+            # println("         removed idx: $(removed)")
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
             len -= 1
-            o = hullnode.data
-            a = len == 1 ? hullnode.data : hullnode.prev.data
+            o = len == 1 ? hullnode.data : hullnode.prev.data
+            a = hullnode.data
         end
         if !hastarget(node) # avoid overwriting the targets for points already on the hull
+            # println("      add $(b)")
             insertafter!(newnode(h.hull, b), hullnode)
             hullnode = hullnode.next
             addtarget!(hullnode, node)
         else
-            if node.target != hullnode.next
-                continue
-            else
+            if node.target === hullnode.next
+                # println("      keep $(hullnode.next.data)")
                 hullnode = hullnode.next
+            else 
+                continue
             end
         end
-
-        i !== 1 && push!(lowerhullidxs, i)
+        if i !== 1 
+            push!(lowerhullidxs, i)
+            push!(lowerhulldups, false)
+        end
         len += 1
+        # println("      lower idxs: $(lowerhullidxs)")
     end
-    
+
+    # @show h.hull
+    # @show lowerhullidxs
+    # @show len
+    # println("Backward")
+
     lidx = length(lowerhullidxs)
     len = 1
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=(h.orientation===CCW)))
+        o = len == 1 ? hullnode.data : hullnode.prev.data
+        a = hullnode.data
+        b = node.data
+        # println("   consider $(b)")
         if lidx > 0 && i === h.points.len - lowerhullidxs[lidx] + 1
             lidx -= 1
-            continue
+            if node.target.prev !== hullnode
+                # println("      ignore upper hull: $(b)")
+                continue
+            end
         end 
-        while len >= 2 && (wrongturn(hullnode.prev.data, hullnode.data, node.data) || coordsareequal(hullnode.data, node.data))
+        if coordsareequal(a,b)
+            # println("      ignore equal coords: $(a), $(b)")
+            if hastarget(node)
+                deletenode!(node.target)
+            end
+            continue
+        end
+        while len >= 2 && wrongturn(o, a, b)
+            # println("      remove $(a)")
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
             len -= 1
+            o = len == 1 ? hullnode.data : hullnode.prev.data
+            a = hullnode.data
         end
         if !hastarget(node) # avoid overwriting the targets for points already on the hull
-            addnode = newnode(h.hull, node.data)
-            insertafter!(addnode, hullnode)
+            # println("      add $(b)")
+            insertafter!(newnode(h.hull, b), hullnode)
             hullnode = hullnode.next
             addtarget!(hullnode, node)
         else
-            hullnode = hullnode.next
+            # println("      existing hull node $(node.data)")
+            if node.target === hullnode.next
+                # println("      keep $(hullnode.next.data)")
+                hullnode = hullnode.next
+            else
+                continue
+            end
+        end
+        if coordsareequal(hullnode.data, head(h.hull).data)
+            deletenode!(hullnode)
+            break
         end
         len += 1
     end

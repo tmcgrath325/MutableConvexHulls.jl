@@ -53,6 +53,12 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
         current = next
     end
 
+    if length(hull) > 1
+        if coordsareequal(head(hull).data, tail(hull).data) 
+            deletenode!(tail(hull))
+        end
+    end
+
     return h
 end
 
