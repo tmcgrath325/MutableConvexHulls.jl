@@ -22,16 +22,6 @@ Return `true` if the monotonechain algorithm should start at the last point in `
 buildinreverse(h::Union{MutableConvexHull, MutableLowerConvexHull}) = h.orientation === CW
 buildinreverse(h::MutableUpperConvexHull) = h.orientation === CCW
 
-function lastdifferentcoord(nodestoadd::Vector{PointNode{T}}) where T
-    o = nodestoadd[end-1].data
-    for i=length(nodestoadd):-1:2
-        a = nodestoadd[i].data
-        o = nodestoadd[i-1].data
-        !coordsareequal(a,o) && break
-    end
-    return o
-end
-
 """
     monotonechain!(hull [, start, stop])
 
@@ -160,10 +150,7 @@ function monotonechain!(h::MutableConvexHull{T},
                 insertafter!(movednode, hullnode)
                 addtarget!(movednode, node)
                 hullnode = movednode
-
             end
-            i !== 1 && push!(lowerhullidxs, i)
-            len += 1
         end
         push!(lowerhullidxs, i)
         push!(lowerhulldups, false)
@@ -227,10 +214,7 @@ function monotonechain!(h::MutableConvexHull{T},
             deletenode!(hullnode)
             break
         end
-    end
-
-    if length(h) > 1 && coordsareequal(head(h.hull).data, tail(h.hull).data)
-        deletenode!(tail(h.hull))
+        len += 1
     end
 
     return h
