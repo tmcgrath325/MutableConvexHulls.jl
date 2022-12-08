@@ -1,4 +1,4 @@
-function jarvissearch(query::AbstractNode{T}, prevedge, pointsnodes, betterturn::Function) where T
+function jarvissearch(query::AbstractNode{T}, prevedge, pointsnodes, betterturn::Function, collinear::Bool) where T
     # isempty(pointsnodes) && throw(ArgumentError("At least 1 point must be provided."))
     firstpoint, iter = Iterators.peel(pointsnodes)
     next = firstpoint === query ? first(iter) : firstpoint # avoid checking identical points
@@ -39,7 +39,7 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
             throw(ErrorException("More points were added to the hull than exist in the list of candidate points."))
         end
         counter += 1
-        next = jarvissearch(current, prevedge, ListNodeIterator(pointslist), betterturn)
+        next = jarvissearch(current, prevedge, ListNodeIterator(pointslist), betterturn, h.collinear)
         if current == next
             throw(ErrorException("Jarvis March failed to progress."))
         end
@@ -51,6 +51,12 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
         addtarget!(tail(hull), next)
         prevedge = next.data .- current.data
         current = next
+    end
+
+    if length(hull) > 1
+        if coordsareequal(head(hull).data, tail(hull).data) 
+            deletenode!(tail(hull))
+        end
     end
 
     return h
