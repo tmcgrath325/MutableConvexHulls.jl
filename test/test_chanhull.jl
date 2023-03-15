@@ -175,6 +175,11 @@
                     for h in hulls
                         addpoint!(h, coord)
                         @test h == jarvismarch(shuffledcoords[1:i]; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+                        if h != jarvismarch(shuffledcoords[1:i]; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+                            @show h.orientation, h.collinear, h.sortedby
+                            @show shuffledcoords[1:i]
+                            @show jarvismarch(shuffledcoords[1:i]; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+                        end
                     end
                 end
             end

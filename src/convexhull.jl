@@ -254,6 +254,17 @@ function removepoint!(h::AbstractConvexHull{T}, node::PointNode{T}) where T
     return h
 end
 
+# returns true if all points in a convex hull are collinear
+function allcollinear(h::AbstractConvexHull)
+    length(h) < 3 && return true
+    headnode = head(h.hull)
+    o = coords(headnode.data)
+    a = coords(headnode.next.data)
+    b = coords(tail(h.hull).data)
+    return iscollinear(sub2d(a,o),o,b)
+end
+
+
 function Base.show(io::IO, h::AbstractConvexHull)
     print(io, typeof(h), '(')
     join(io, h, ", ")

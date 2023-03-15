@@ -5,6 +5,20 @@ Base.:(!)(o::HullOrientation) = o === CCW ? CW : CCW
 const UP = (0,1)
 const DOWN = (0,-1)
 
+# checks if a set of points are collinear
+iscollinear(prevedge, o, a) = (cross2d(prevedge, sub2d(a,o)) == 0)
+function iscollinear(points)
+    length(points) < 3 && return true
+    o = points[1]
+    a = points[2]
+    dir = sub2d(a,o)
+    for p in points[3:end]
+        iscollinear(dir, a, p) || return false
+        a = p
+    end
+    return true
+end    
+
 # The following three methods are only meant to be called if the cross product is zero. They check if the next candidate edge is aligned with the previous edge.
 isaligned(prevedge,nextedge) = dot2d(prevedge, nextedge) > 0
 function isalignedfurther(orientation, prevedge, oa, ob, ab) 
@@ -47,20 +61,20 @@ end
 
 # colinear vectors will always yield `true`
 isorientedturn_vec(orientation::HullOrientation, oa, ob, ab) = isvalidturn(orientation, (cp,v1,v2,v3)->true, oa, ob, ab)
-isorientedturn(orientation::HullOrientation, o, a, b) = isorientedturn_vec(orientation, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]), (b[1] - a[1], b[2] - a[2]))
+isorientedturn(orientation::HullOrientation, o, a, b) = isorientedturn_vec(orientation, sub2d(a,o), sub2d(b,o), sub2d(b,a))
 
 # colinear vectors will only yield `true` if they are aligned (dot product > 0). This is typically only useful with sorted points
 isalignedturn_vec(orientation, oa, ob, ab) = isvalidturn(orientation, (cp, oa, ob, ab) -> (cp != 0 ? true : isaligned(oa,ob)), oa, ob, ab)
-isalignedturn(orientation, o, a, b) = isalignedturn_vec(orientation, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]), (b[1] - a[1], b[2] - a[2]))
+isalignedturn(orientation, o, a, b) = isalignedturn_vec(orientation, sub2d(a,o), sub2d(b,o), sub2d(b,a))
 
 # colinear vectors will only yield `true` if the second is shorter than the first. This is typically only useful with sorted points
 isshorterturn_vec(orientation, oa, ob, ab) = isvalidturn(orientation, (cp, oa, ob, ab) -> (cp != 0 ? true : sum(abs2,oa) > sum(abs2,ob)), oa, ob, ab)
-isshorterturn(orientation, o, a, b) = isshorterturn_vec(orientation, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]), (b[1] - a[1], b[2] - a[2]))
+isshorterturn(orientation, o, a, b) = isshorterturn_vec(orientation, sub2d(a,o), sub2d(b,o), sub2d(b,a))
 
 # colinear vectors will only yield 'true' if they are aligned and if the second vector moves less than the first (relative to the direction of the previous edge)
 iscloserturn_vec(orientation, prevedge, oa, ob, ab) = isvalidturn(orientation, (cp, oa, ob, ab) -> (cp != 0 ? true : isalignedcloser(orientation,prevedge,oa,ob,ab)), oa, ob, ab)
-iscloserturn(orientation, prevedge, o, a, b) = iscloserturn_vec(orientation, prevedge, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]), (b[1] - a[1], b[2] - a[2]))
+iscloserturn(orientation, prevedge, o, a, b) = iscloserturn_vec(orientation, prevedge, sub2d(a,o), sub2d(b,o), sub2d(b,a))
 
 # colinear vectors will only yield 'true' if they are aligned and if the second vector moves further than the first (relative to the direction of the previous edge)
 isfurtherturn_vec(orientation, prevedge, oa, ob, ab) = isvalidturn(orientation, (cp, oa, ob, ab) -> (cp != 0 ? true : isalignedfurther(orientation,prevedge,oa,ob,ab)), oa, ob, ab)
-isfurtherturn(orientation, prevedge, o, a, b) = isfurtherturn_vec(orientation, prevedge, (a[1] - o[1], a[2] - o[2]), (b[1] - o[1], b[2] - o[2]), (b[1] - a[1], b[2] - a[2]))
+isfurtherturn(orientation, prevedge, o, a, b) = isfurtherturn_vec(orientation, prevedge, sub2d(a,o), sub2d(b,o), sub2d(b,a))
