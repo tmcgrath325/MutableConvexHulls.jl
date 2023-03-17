@@ -85,6 +85,8 @@ end
 function monotonechain!(h::MutableConvexHull{T},
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
+    # @show h.hull
+    # @show start.data, stop.data
     if isempty(h.points)
         empty!(h.hull)
         return h
@@ -104,14 +106,14 @@ function monotonechain!(h::MutableConvexHull{T},
     lowerhulldups = Bool[]
     hullnode = h.hull.head
     len = 0
-    # @show h.hull
+    # @show hullnode.data, h.hull
     # println("Forward")
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
         o = len == 1 ? hullnode.data : hullnode.prev.data
         a = hullnode.data
         b = node.data
         # println("   consider $(b)")
-        if coordsareequal(a,b)
+        if i > 1 && coordsareequal(a,b)
             # println("      ignore equal coords: $(a), $(b)")
             push!(lowerhullidxs, i)
             push!(lowerhulldups, true)
@@ -216,7 +218,7 @@ function monotonechain!(h::MutableConvexHull{T},
         end
         len += 1
     end
-
+    # @show h.hull
     return h
 end
 
