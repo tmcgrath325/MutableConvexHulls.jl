@@ -85,12 +85,10 @@ end
 function monotonechain!(h::MutableConvexHull{T},
                         start::PointNode{T} = firstpoint(h),
                         stop::PointNode{T} = lastpoint(h)) where T
-    # @show h.hull
-    # @show start.data, stop.data
     if isempty(h.points)
         empty!(h.hull)
         return h
-    elseif length(h.points) == 1
+    elseif (length(h.points) == 1) || coordsareequal(start.data, stop.data)
         empty!(h.hull)
         insertafter!(newnode(h.hull, head(h.points).data), h.hull.head)
         addtarget!(head(h.hull), head(h.points))

@@ -170,6 +170,8 @@ Base.IteratorSize(::PointNodeIterator) = Base.SizeUnknown()
 Add `point` to the list of points contained by the provided convex hull `hull`. If `point` lies outside the convex hull,
 the list of hull points will be updated accordingly.
 
+Returns a tuple containing the hull and a boolean, which is true if the added point expands the convex hull and is false otherwise.
+
 See also: [mergepoints!](@ref), [removepoint!](@ref)
 """
 function addpoint!(h::AbstractConvexHull{T}, point::T) where T
@@ -178,13 +180,14 @@ function addpoint!(h::AbstractConvexHull{T}, point::T) where T
         push!(h.hull, point)
         push!(h.points, point)
         addtarget!(tail(h.hull), tail(h.points))
-        return h
+        return h, true
     end
     push!(h.points, point)
     if !insidehull(point, h)    # if the new point is outside the hull, update the convex hull
         monotonechain!(h)
+        return h, true
     end
-    return h
+    return h, false
 end
 
 """
@@ -220,38 +223,79 @@ mergepoints!(h::AbstractConvexHull, points::Matrix) = mergepoints!(h, [(points[i
 
 Removes `node` from `hull`. If the `node` corresponds to a point on the convex hull, the list of hull points will be updated accordingly.
 
+Returns a tuple containing the hull and a boolean, which is true if a point on the convex hull was removed and is false if an interior
+or duplicate point was removed.
+
 See also: [addpoint!](@ref), [mergepoints!](@ref)
 """
 function removepoint!(h::AbstractConvexHull{T}, node::HullNode{T}) where T
-    node.list !== h.hull && throw(ArgumentError("The specified node must belong to the provided convex hull"))
-    start = node.prev.target
-    stop = node.next.target
-    deletenode!(node.target)
-    deletenode!(node)
-    # @show h.hull
-    # @show h.points
-    start = start.list === h.points ? start : firstpoint(h)
-    stop = stop.list === h.points ? stop : lastpoint(h)
-    monotonechain!(h, start, stop)
-    return h
+    updatedhull = removepoint!(h, node.target)[2]
+    return h, updatedhull
 end
 
-function removepoint!(h::AbstractConvexHull{T}, node::PointNode{T}) where T
+function removepoint!(h::Union{MutableLowerConvexHull{T}, MutableUpperConvexHull{T}}, node::PointNode{T}) where T
     node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
     if hastarget(node)
-        start = node.target.prev.target
-        stop = node.target.next.target
-        deletenode!(node.target)
+        # handle cases with duplicate data
+        next = node.next
+        prev = node.prev
+        if !athead(prev)
+            if coordsareequal(prev.data, node.data)
+                removepoint!(h, prev)
+                return h, false
+            end
+        end
+        if !attail(next)
+            if coordsareequal(next.data, node.data)
+                removepoint!(h, next)
+                return h, false
+            end
+        end
+        # handle general case
+        target = node.target
+        hullstart = target.prev
+        hullstop = target.next
+        deletenode!(target)
         deletenode!(node)
-        # @show h.hull
-        # @show h.points
-        start = start.list === h.points ? start : firstpoint(h)
-        stop = stop.list === h.points ? stop : lastpoint(h)
+        start = athead(hullstart) ? firstpoint(h) : hullstart.target
+        stop = attail(hullstop) ? lastpoint(h) : hullstop.target
+        coordsareequal(start.data, stop.data) && return (h, true)
         monotonechain!(h, start, stop)
+        return h, true
     else
         deletenode!(node)
+        return h, false
     end
-    return h
+end
+
+function removepoint!(h::MutableConvexHull{T}, node::PointNode{T}) where T
+    node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
+    if hastarget(node)
+        # handle cases with duplicate data
+        next = node.next
+        prev = node.prev
+        if !athead(prev)
+            if coordsareequal(prev.data, node.data)
+                removepoint!(h, prev)
+                return h, false
+            end
+        end
+        if !attail(next)
+            if coordsareequal(next.data, node.data)
+                removepoint!(h, next)
+                return h, false
+            end
+        end
+        # handle general case
+        target = node.target
+        deletenode!(target)
+        deletenode!(node)
+        monotonechain!(h)
+        return h, true
+    else
+        deletenode!(node)
+        return h, false
+    end
 end
 
 # returns true if all points in a convex hull are collinear

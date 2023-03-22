@@ -23,6 +23,7 @@ Each node in the list should contain a two-dimensional point, and the nodes are 
 function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{T},Nothing}=nothing) where T
     pointslist = h.hull.target
     hull = h.hull
+    @assert length(hull) > 0
     if isnothing(stop)
         stop = head(hull)
     end
@@ -32,7 +33,7 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
 
     # perform jarvis march 
     counter = 0
-    current = tail(hull).target
+    current = head(hull).target
     prevedge = initedge
     while counter == 0 || current !== stop.target
         if counter > length(pointslist)
@@ -40,8 +41,12 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
         end
         counter += 1
         next = jarvissearch(current, prevedge, ListNodeIterator(pointslist), betterturn)
-        if current == next
-            throw(ErrorException("Jarvis March failed to progress."))
+        if coordsareequal(current.data, next.data)
+            if length(h) == 1
+                return h
+            else
+                throw(ErrorException("Jarvis March failed to progress."))
+            end
         end
         # stop early when ...  
         next == stop && break           # the stopping point has been reached
@@ -107,6 +112,9 @@ function jarvismarch!(h::MutableLowerConvexHull)
     push!(h.hull, firstnode.data)
     addtarget!(head(h.hull), firstnode)
 
+    # handle duplicate point cases
+    coordsareequal(firstnode.data, stop.data) && return h
+
     # populate the hull via jarvis march
     jarvismarch!(h, DOWN, stop)
 
@@ -136,6 +144,9 @@ function jarvismarch!(h::MutableUpperConvexHull)
     # reinitialize with the starting point
     push!(h.hull, firstnode.data)
     addtarget!(head(h.hull), firstnode)
+
+    # handle duplicate point cases
+    coordsareequal(firstnode.data, stop.data) && return h
 
     # populate the hull via jarvis march
     jarvismarch!(h, UP, stop)

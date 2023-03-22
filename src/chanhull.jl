@@ -59,9 +59,9 @@ function addpoint!(h::AbstractChanConvexHull{T}, point::T) where T
         push!(h.subhulls, eltype(h.subhulls)(h.orientation, h.collinear, h.sortedby))
     end
     smallhull = argmin(x->length(x),h.subhulls)
-    addpoint!(smallhull, point)
-    merge_hull_lists!(h)
-    return h
+    updatedhull = addpoint!(smallhull, point)[2]
+    updatedhull && merge_hull_lists!(h)
+    return h, updatedhull
 end
 
 function mergepoints!(h::AbstractChanConvexHull{T}, points::AbstractVector{T}) where T
@@ -76,24 +76,19 @@ function mergepoints!(h::AbstractChanConvexHull{T}, points::AbstractVector{T}) w
 end
 
 function removepoint!(h::AbstractChanConvexHull{T}, node::TargetedListNode{T}) where T
-    node.list !== h.hull && throw(ArgumentError("The specified node must belong to the provided convex hull"))
-    shull = getfirst(x -> x.points === node.target.list, h.subhulls)
-    removepoint!(shull, node.target)
-    deletenode!(node)
-    merge_hull_lists!(h)
-    return h
+    updatedhull = removepoint!(h, node.target)[2]
+    return h, updatedhull
 end
 
 function removepoint!(h::AbstractChanConvexHull{T}, node::HullNode{T}) where T
-    shull = getfirst(x -> x.hull === node.list, h.subhulls)
-    removepoint!(shull, node.target)
-    merge_hull_lists!(h)
-    return h
+    updatedhull = removepoint!(h, node.target)[2]
+    return h, updatedhull
 end
 
 function removepoint!(h::AbstractChanConvexHull{T}, node::PointNode{T}) where T
-    shull = getfirst(x -> x.points === node.list, h.subhulls)
-    removepoint!(shull, node.target)
-    merge_hull_lists!(h)
-    return h
+    shull = getfirst(sh -> sh.points === node.list, h.subhulls)
+    shull === nothing && throw(ArgumentError("The specified node must belong to the provided convex hull"))
+    updatedhull = removepoint!(shull, node.target)[2]
+    updatedhull && merge_hull_lists!(h)
+    return h, updatedhull
 end

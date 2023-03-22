@@ -76,8 +76,19 @@ end
 mergehulls(h::H, others::H...) where H <: AbstractConvexHull = mergehulls!(copy(h), others...)
 
 function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)  
+    empty!(mergedhull) # start with an empty hull
+    # handle simple cases
     isempty(hulltargets) && return empty!(mergedhull)
-    # determine starting and stopping points
+    if length(hulltargets) == 1
+        ht = only(hulltargets)
+        if (length(ht) == 1)
+            hthead = head(ht)
+            push!(mergedhull, hthead.data)
+            addtarget!(tail(mergedhull), hthead.target)
+            return mergedhull
+        end
+    end
+    # determine starting and stopping points for general case
     f = x -> sortedby(x.data)
     start = rev ? argmax(f, [head(x) for x in hulltargets]) :
                   argmin(f, [head(x) for x in hulltargets])
@@ -90,7 +101,6 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
     maxlength = sum(x->length(x), hulltargets)
 
     # add first point to hull
-    empty!(mergedhull)
     pushfirst!(mergedhull, start.data)
     addtarget!(head(mergedhull), start.target)
 
@@ -119,11 +129,14 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
             candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
         end
         next = jarvissearch(current, prevedge, candidates, betterturn)
-        if current === next
-            throw(ErrorException("Jarvis March failed to progress."))
+        if coordsareequal(current.data, next.data)
+            if length(mergedhull) == 1
+                return mergedhull
+            else
+                throw(ErrorException("Jarvis March failed to progress."))
+            end
         end
         nextdata = next.data
-        # @show prevdata, currentdata, nextdata
         if coordsareequal(prevdata, nextdata)
             next = stop
         end
