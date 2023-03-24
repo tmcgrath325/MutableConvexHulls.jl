@@ -84,30 +84,36 @@ function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
 
     # handle cases where the new point is tied with an extreme point with respect to the first coordinate
     hhead, htail = head(h.hull), tail(h.hull)
-    if pointdata[1] == hhead.data[1]
+    headdata, taildata = hhead.data, htail.data
+    if pointdata[1] == headdata[1]
+        # handle case where the convex hull is a line
+        if pointdata[1] == taildata[1]
+            ((pointdata[2] == headdata[2]) || (pointdata[2] == taildata[2])) && return true
+            return h.collinear ? false : ((headdata[2] < pointdata[2] < taildata[2]) || (headdata[2] > pointdata[2] > taildata[2]))
+        end
         lastleftnode = hhead
         for leftnode in ListNodeIterator(h.hull)
             coordsareequal(leftnode.data, pointdata) && return true
-            leftnode.data[1] != hhead.data[1] && break
+            leftnode.data[1] != headdata[1] && break
             lastleftnode = leftnode
         end
         if ccw 
-            return pointdata[2] >= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) >= h.sortedby(hhead.data)
+            return pointdata[2] >= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) >= h.sortedby(headdata)
         else
-            return pointdata[2] >= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) <= h.sortedby(hhead.data)
+            return pointdata[2] >= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) <= h.sortedby(headdata)
         end
     end
-    if pointdata[1] == htail.data[1]
+    if pointdata[1] == taildata[1]
         firstrightnode = htail
         for rightnode in ListNodeIterator(h.hull; rev=true)
             coordsareequal(rightnode.data, pointdata) && return true
-            rightnode.data[1] != htail.data[1] && break
+            rightnode.data[1] != taildata[1] && break
             firstrightnode = rightnode
         end
         if ccw 
-            return pointdata[2] >= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) <= h.sortedby(htail.data)
+            return pointdata[2] >= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) <= h.sortedby(taildata)
         else
-            return pointdata[2] >= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) >= h.sortedby(htail.data)
+            return pointdata[2] >= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) >= h.sortedby(taildata)
         end
     end
 
@@ -131,30 +137,36 @@ function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
 
     # handle cases where the new point is tied with an extreme point with respect to the first coordinate
     hhead, htail = head(h.hull), tail(h.hull)
-    if pointdata[1] == hhead.data[1]
+    headdata, taildata = hhead.data, htail.data
+    if pointdata[1] == headdata[1]
+        # handle case where the convex hull is a line
+        if pointdata[1] == taildata[1]
+            ((pointdata[2] == headdata[2]) || (pointdata[2] == taildata[2])) && return true
+            return h.collinear ? false : ((headdata[2] < pointdata[2] < taildata[2]) || (headdata[2] > pointdata[2] > taildata[2]))
+        end
         lastleftnode = hhead
         for leftnode in ListNodeIterator(h.hull)
             coordsareequal(leftnode.data, pointdata) && return true
-            leftnode.data[1] != hhead.data[1] && break
+            leftnode.data[1] != headdata[1] && break
             lastleftnode = leftnode
         end
         if ccw 
-            return pointdata[2] <= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) <= h.sortedby(hhead.data)
+            return pointdata[2] <= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) <= h.sortedby(headdata)
         else
-            return pointdata[2] <= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) >= h.sortedby(hhead.data)
+            return pointdata[2] <= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) >= h.sortedby(headdata)
         end
     end
-    if pointdata[1] == htail.data[1]
+    if pointdata[1] == taildata[1]
         firstrightnode = htail
         for rightnode in ListNodeIterator(h.hull; rev=true)
             coordsareequal(rightnode.data, pointdata) && return true
-            rightnode.data[1] != htail.data[1] && break
+            rightnode.data[1] != taildata[1] && break
             firstrightnode = rightnode
         end
         if ccw 
-            return pointdata[2] <= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) >= h.sortedby(htail.data)
+            return pointdata[2] <= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) >= h.sortedby(taildata)
         else
-            return pointdata[2] <= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) <= h.sortedby(htail.data)
+            return pointdata[2] <= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) <= h.sortedby(taildata)
         end
     end
 
