@@ -45,19 +45,28 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
     # get a list of point nodes to be added to the hull
     nodestoadd = PointNode{T}[]
     start === firstpoint(h) && push!(nodestoadd, start)
+    lastdata = start.data
+    penultimatedata = lastdata
     for node in ListNodeIterator(start; rev=buildinreverse(h))
+        nodedata = node.data
         if !isempty(nodestoadd) && nodestoadd[end] !== node
             while length(nodestoadd) >= 2 # && wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
-                if coordsareequal(nodestoadd[end-1].data, nodestoadd[end].data) || wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
+                if coordsareequal(penultimatedata, lastdata) || wrongturn(penultimatedata, lastdata, nodedata)
                     removednode = nodestoadd[end]
                     hastarget(removednode) && deletenode!(removednode.target)
                     pop!(nodestoadd)
+                    lastdata = penultimatedata
+                    if (length(nodestoadd) > 1)
+                        penultimatedata = nodestoadd[end-1].data
+                    end
                 else
                     break
                 end
             end
         end
         push!(nodestoadd, node)
+        penultimatedata = lastdata
+        lastdata = nodedata
         if node === stop
             if length(nodestoadd) >= 2 && coordsareequal(nodestoadd[end-1].data, stop.data)
                 removednode = nodestoadd[end]
