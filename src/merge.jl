@@ -97,6 +97,7 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
         stop = rev ? argmin(f, [tail(x) for x in hulltargets]) :
                      argmax(f, [tail(x) for x in hulltargets])
     end
+    stopdata = stop.data
 
     maxlength = sum(x->length(x), hulltargets)
 
@@ -137,15 +138,12 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
             end
         end
         nextdata = next.data
-        if coordsareequal(prevdata, nextdata)
-            next = stop
+        # stop adding points when the stopping point has been reached
+        if coordsareequal(prevdata, nextdata) || coordsareequal(stopdata, nextdata)
+            break
         end
         prevdata = currentdata
         currentdata = nextdata
-        # stop adding points when the stopping point has been reached
-        if next == stop
-            break
-        end
         # add the next node to the hull
         push!(mergedhull, next.data)
         addtarget!(tail(mergedhull), next.target)
