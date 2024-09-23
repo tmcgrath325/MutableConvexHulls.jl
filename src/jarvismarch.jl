@@ -1,6 +1,7 @@
 function jarvissearch(query::AbstractNode{T}, prevedge, pointsnodes, betterturn::Function) where T
     # isempty(pointsnodes) && throw(ArgumentError("At least 1 point must be provided."))
     firstpoint, iter = Iterators.peel(pointsnodes)
+    isempty(iter) && return firstpoint
     next = firstpoint === query ? first(iter) : firstpoint # avoid checking identical points
     for target in pointsnodes
         if !coordsareequal(target.data, query.data)
