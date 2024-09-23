@@ -99,7 +99,7 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
     end
     stopdata = stop.data
 
-    maxlength = sum(x->length(x), hulltargets)
+    maxlength = sum(length, hulltargets)
 
     # add first point to hull
     pushfirst!(mergedhull, start.data)
@@ -119,7 +119,7 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
     prevedge = upper ? UP : DOWN
     while counter == 0 || current !== stop
         if counter > maxlength
-            throw(ErrorException("More points were added to the hull than exist in the original hulls to be merged."))
+            throw(ErrorException("More points were added to the hull ($counter) than exist in the original hulls to be merged ($maxlength)."))
         end
         counter += 1
         for (i, ht) in enumerate(hulltargets)
