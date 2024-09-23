@@ -127,8 +127,10 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
             #                  !(!collinear && targetscollinear[i])) ?                # its candidate point as long as it doesn't contain extraneous collinear points.                                             
             #     (attail(current.next) ? head(ht) : current.next) :                  # TODO: Ambiguous direction (when a subhull is entirely collinear) can cause issues           
             #     jarvissortedsearch(current, prevedge, ht, betterturn)
-            candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
+            # candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
+            candidates[i] = jarvissearch(current, prevedge, ListNodeIterator(ht), betterturn)
         end
+        println([c.data for c in candidates])
         next = jarvissearch(current, prevedge, candidates, betterturn)
         if coordsareequal(current.data, next.data)
             if length(mergedhull) == 1

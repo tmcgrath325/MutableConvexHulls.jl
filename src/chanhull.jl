@@ -61,7 +61,7 @@ function addpoint!(h::AbstractChanConvexHull{T}, point::T) where T
             h.subhulls[end].points.cache = PairedLinkedLists.SkipListCache{T}()
         end
     end
-    smallhull = argmin(x->length(x),h.subhulls)
+    smallhull = argmin(x->length(x.points),h.subhulls)
     updatedhull = addpoint!(smallhull, point)[2]
     updatedhull && merge_hull_lists!(h)
     return h, updatedhull
@@ -75,7 +75,7 @@ function mergepoints!(h::AbstractChanConvexHull{T}, points::AbstractVector{T}) w
             h.subhulls[end].points.cache = PairedLinkedLists.SkipListCache{T}()
         end
     end
-    smallhull = argmin(x->length(x),h.subhulls)
+    smallhull = argmin(x->length(x.points),h.subhulls)
     mergepoints!(smallhull, points)
     merge_hull_lists!(h)
     return h
