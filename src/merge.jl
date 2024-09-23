@@ -130,7 +130,6 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
             # candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
             candidates[i] = jarvissearch(current, prevedge, ListNodeIterator(ht), betterturn)
         end
-        println([c.data for c in candidates])
         next = jarvissearch(current, prevedge, candidates, betterturn)
         if coordsareequal(current.data, next.data)
             if length(mergedhull) == 1
