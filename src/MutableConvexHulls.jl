@@ -8,6 +8,7 @@ module MutableConvexHulls
 
 using PairedLinkedLists
 using PairedLinkedLists: AbstractNode, AbstractList
+using DoubleFloats
 
 include("utils.jl")
 include("orientation.jl")
