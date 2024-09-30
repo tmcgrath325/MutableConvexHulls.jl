@@ -3,7 +3,7 @@ coords(data) = (data[1], data[2])
 coordsareequal(data1, data2) = data1[1] == data2[1] && data1[2] == data2[2]
 
 # 2D subtraction of data
-sub2d(a, b) = (a[1] - b[1], a[2] - b[2])
+sub2d(a, b) = (BigFloat(a[1]) - BigFloat(b[1]), BigFloat(a[2]) - BigFloat(b[2]))
 
 # cross and dot products of 2D vectors OA and OB
 cross2d(oa, ob) = (oa[1] * ob[2] - oa[2] * ob[1])
