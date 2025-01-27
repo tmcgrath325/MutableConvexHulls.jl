@@ -14,6 +14,8 @@ function jarvissearch(query::AbstractNode{T}, prevedge, pointsnodes, betterturn:
     return next
 end
 
+getiterator(pl) = typeof(pl) <: AbstractList ? ListNodeIterator(pl) : Iterators.Stateful(pl)
+
 """
     jarvismarch!(hull [, initedge, stop])
 
@@ -21,16 +23,16 @@ Determine the convex hull of the points contained in the provided `hull.points` 
 Each node in the list should contain a two-dimensional point, and the nodes are assumed to be sorted 
 (e.g. by lowest "x" value and by lowest "y" in case of ties, though some other sorting methods may produce valid results).
 """
-function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{T},Nothing}=nothing) where T
-    pointslist = h.hull.target
-    hull = h.hull
+function jarvismarch!(hull::Union{AbstractConvexHull{T},AbstractList{T}}, pointslist, collinear, orientation, initedge, stop::Union{PointNode{T},HullNode{T},Nothing}=nothing) where T
+    # pointslist = h.hull.target   
     @assert length(hull) > 0
     if isnothing(stop)
         stop = head(hull)
     end
+    stopdata = stop.data
 
     # use the appropriate check for determining a better option for the next point
-    betterturn(prevedge,o,a,b) = h.collinear ? iscloserturn(!h.orientation,prevedge,o,a,b) : isfurtherturn(!h.orientation,prevedge,o,a,b)
+    betterturn(prevedge,o,a,b) = collinear ? iscloserturn(!orientation,prevedge,o,a,b) : isfurtherturn(!orientation,prevedge,o,a,b)
 
     # perform jarvis march 
     counter = 0
@@ -41,17 +43,16 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
             throw(ErrorException("More points were added to the hull than exist in the list of candidate points."))
         end
         counter += 1
-        next = jarvissearch(current, prevedge, ListNodeIterator(pointslist), betterturn)
+        next = jarvissearch(current, prevedge, getiterator(pointslist), betterturn)
         if coordsareequal(current.data, next.data)
-            if length(h) == 1
-                return h
+            if length(hull) == 1
+                return hull
             else
                 throw(ErrorException("Jarvis March failed to progress."))
             end
         end
-        # stop early when ...  
-        next == stop && break           # the stopping point has been reached
-        hastarget(next) && break       # the next node to be added already is part of the hull
+        next == stop && break                                                       # the stopping point has been reached
+        (typeof(pointslist) <: AbstractPointList{T}) && hastarget(next) && break    # the next node to be added already is part of the hull
         # add the next node to the hull
         push!(hull, next.data)
         addtarget!(tail(hull), next)
@@ -65,7 +66,7 @@ function jarvismarch!(h::AbstractConvexHull{T}, initedge, stop::Union{PointNode{
         end
     end
 
-    return h
+    return hull
 end
 
 function jarvismarch!(h::MutableConvexHull)
@@ -88,7 +89,7 @@ function jarvismarch!(h::MutableConvexHull)
     addtarget!(head(h.hull), firstnode)
 
     # populate the hull via jarvis march
-    jarvismarch!(h, DOWN)
+    jarvismarch!(h.hull, h.hull.target, h.collinear, h.orientation, DOWN)
 
     return h
 end
@@ -117,7 +118,7 @@ function jarvismarch!(h::MutableLowerConvexHull)
     coordsareequal(firstnode.data, stop.data) && return h
 
     # populate the hull via jarvis march
-    jarvismarch!(h, DOWN, stop)
+    jarvismarch!(h.hull, h.hull.target, h.collinear, h.orientation, DOWN, stop)
 
     # add the last node
     push!(h.hull, stop.data)
@@ -150,7 +151,7 @@ function jarvismarch!(h::MutableUpperConvexHull)
     coordsareequal(firstnode.data, stop.data) && return h
 
     # populate the hull via jarvis march
-    jarvismarch!(h, UP, stop)
+    jarvismarch!(h.hull, h.hull.target, h.collinear, h.orientation, UP, stop)
 
     # add the last node
     push!(h.hull, stop.data)
