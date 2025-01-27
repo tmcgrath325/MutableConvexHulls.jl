@@ -16,6 +16,8 @@ tests = ["orientation",
 
 @testset "MutableConvexHulls" begin
 
+include(joinpath(dirname(@__FILE__), "test_funs.jl"))
+
 for t in tests
     fp = joinpath(dirname(@__FILE__), "test_$t.jl")
     println("$fp ...")

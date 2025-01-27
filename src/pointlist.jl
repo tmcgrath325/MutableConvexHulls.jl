@@ -1,4 +1,4 @@
-using PairedLinkedLists: AbstractPairedListNode, AbstractPairedSkipNode, AbstractPairedLinkedList, AbstractPairedSkipList
+using PairedLinkedLists: AbstractPairedListNode, AbstractPairedSkipNode, AbstractPairedLinkedList, AbstractPairedSkipList, SkipListCache
 
 abstract type AbstractHullNode{T,L,F} <: AbstractPairedListNode{T,L} end
 abstract type AbstractHullList{T,F} <: AbstractPairedLinkedList{T} end
@@ -43,6 +43,7 @@ mutable struct PointList{T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Func
     tail::PointNode{T,PointList{T,R,N,F},N}
     top::PointNode{T, PointList{T,R,N,F},N}
     toptail::PointNode{T, PointList{T,R,N,F},N}
+    cache::Union{Nothing, SkipListCache{T}}
     function PointList{T,R,N,F}(;sortedby::F=identity, skipfactor::Int=2) where {T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Function}
         l = new{T,R,N,F}(0,1,skipfactor,sortedby)
         l.target = l
@@ -57,6 +58,7 @@ mutable struct PointList{T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Func
         l.tail.prev = l.head
         l.top.next = l.toptail
         l.toptail.prev = l.top
+        l.cache = nothing
         return l
     end
     function PointList{T,R,N,F}(target::PointList{T}; sortedby::F=identity, skipfactor::Int=2) where {T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Function}
@@ -72,6 +74,7 @@ mutable struct PointList{T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Func
         l.tail.prev = l.head
         l.top.next = l.toptail
         l.toptail.prev = l.top
+        l.cache = nothing
         return l
     end
 end

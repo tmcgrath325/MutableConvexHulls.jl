@@ -1,14 +1,15 @@
 name = "MutableConvexHulls"
 uuid = "948c7aac-0e5e-4631-af23-7a6bb7a17825"
 authors = ["Tom McGrath <tmcgrath325@gmail.com> and contributors"]
-version = "0.2.3"
+version = "0.2.4"
 
 [deps]
+DoubleFloats = "497a8b3b-efae-58df-a0af-a86822472b78"
 PairedLinkedLists = "7a42b37b-ed3b-477a-9848-3661f53bb718"
 
 [compat]
+PairedLinkedLists = "0.2.2"
 julia = "1.7"
-PairedLinkedLists = "0.2.1"
 
 [extras]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"

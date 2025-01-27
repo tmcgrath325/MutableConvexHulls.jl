@@ -13,11 +13,11 @@
     ];
 
     chanhull = ChanLowerConvexHull{eltype(subhullpoints[1])}(CCW, true, sortedby);
-    subhulls = [lower_monotonechain(pts; collinear=true, sortedby=sortedby) for pts in subhullpoints];
-    chanhull.subhulls = subhulls;
+    chanhull.subhulls = [lower_monotonechain(pts; collinear=true, sortedby=sortedby) for pts in subhullpoints];
+
+    jarvishull = lower_jarvismarch(collect(Iterators.flatten(subhullpoints)); orientation=CCW, collinear=true, sortedby=sortedby)
 
     MutableConvexHulls.merge_hull_lists!(chanhull)
 
-    jarvishull = lower_jarvismarch(collect(Iterators.flatten(subhullpoints)); orientation=CCW, collinear=true, sortedby=sortedby)
     @test chanhull == jarvishull
 end
