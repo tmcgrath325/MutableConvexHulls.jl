@@ -51,7 +51,7 @@ function jarvismarch!(hull::Union{AbstractConvexHull{T},AbstractList{T}}, points
                 throw(ErrorException("Jarvis March failed to progress."))
             end
         end
-        next == stop && break                                                       # the stopping point has been reached
+        coordsareequal(next.data, stop.data) && break                               # the stopping point has been reached
         (typeof(pointslist) <: AbstractPointList{T}) && hastarget(next) && break    # the next node to be added already is part of the hull
         # add the next node to the hull
         push!(hull, next.data)
