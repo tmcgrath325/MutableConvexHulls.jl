@@ -106,7 +106,7 @@ end
 Base.iterate(h::AbstractChanConvexHull) = iterate(h, h.hull.head.next)
 Base.iterate(h::AbstractChanConvexHull, node::TargetedListNode) = iterate(h.hull, node)
 
-function addpoint!(h::AbstractChanConvexHull{T}, point::T) where T
+function growsubhulls!(h::AbstractChanConvexHull{T}) where T
     npoints = sum(length, h.subhulls)
     while npoints > 3 && length(h.subhulls)^2 < npoints
         push!(h.subhulls, eltype(h.subhulls)(h.orientation, h.collinear, h.sortedby))
@@ -114,6 +114,11 @@ function addpoint!(h::AbstractChanConvexHull{T}, point::T) where T
             h.subhulls[end].points.cache = PairedLinkedLists.SkipListCache{T}()
         end
     end
+    return h
+end
+
+function addpoint!(h::AbstractChanConvexHull{T}, point::T) where T
+    growsubhulls!(h)
     smallhull = argmin(x->length(x.points),h.subhulls)
     pushcache!(h, h.cache, smallhull, point, false)
     updatedhull = addpoint!(smallhull, point)[2]
@@ -122,13 +127,7 @@ function addpoint!(h::AbstractChanConvexHull{T}, point::T) where T
 end
 
 function mergepoints!(h::AbstractChanConvexHull{T}, points::AbstractVector{T}) where T
-    npoints = sum(length, h.subhulls)
-    while npoints > 3 && length(h.subhulls)^2 < npoints
-        push!(h.subhulls, eltype(h.subhulls)(h.orientation, h.collinear, h.sortedby))
-        if (h.subhulls[1].points.cache !== nothing)
-            h.subhulls[end].points.cache = PairedLinkedLists.SkipListCache{T}()
-        end
-    end
+    growsubhulls!(h)
     smallhull = argmin(x->length(x.points),h.subhulls)
     pushcache!(h, h.cache, smallhull, points, false)
     mergepoints!(smallhull, points)

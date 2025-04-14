@@ -6,7 +6,8 @@ const MCH = MutableConvexHulls
 
 Random.seed!(1234)
 
-tests = ["orientation",
+tests = [
+         "orientation",
          "monotonechain",
          "jarvismarch",
          "convexhull",
