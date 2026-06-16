@@ -82,7 +82,7 @@ function removetests(n, by, coords, hullfun, truthfun)
                 removeddata = shuffledcoords[removeidx]
                 deleteat!(shuffledcoords, removeidx)
                 for h in hulls
-                    removepoint!(h, getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.target)))
+                    removepoint!(h, MCH.getfirst(x -> x.data == removeddata, ListNodeIterator(h.hull.target)))
                     @test h == truthfun(shuffledcoords; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
                 end
             end
@@ -159,7 +159,7 @@ function chanremovetests(n, by, coords, hullfun, truthfun)
                 for h in hulls
                     rmnode = first(h.subhulls).points.head
                     for sh in h.subhulls
-                        rmnode = getfirst(x -> x.data == removeddata, ListNodeIterator(sh.points))
+                        rmnode = MCH.getfirst(x -> x.data == removeddata, ListNodeIterator(sh.points))
                         !isnothing(rmnode) && break
                     end
                     removepoint!(h, rmnode)
