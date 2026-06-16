@@ -1,11 +1,11 @@
 abstract type AbstractConvexHull{T} end
 
 mutable struct MutableConvexHull{T, F<:Function} <: AbstractConvexHull{T}
-    hull::HullList{T,F}
-    points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const hull::HullList{T,F}
+    const points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
 end
 function MutableConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
     points = PointList{T}(;sortedby=sortedby)
@@ -30,11 +30,11 @@ See also: [monotonechain](@ref), [jarvismarch](@ref), [addpoint!](@ref), [mergep
 MutableConvexHull{T}(orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableConvexHull{T,F}(orientation,collinear,sortedby)
 
 mutable struct MutableLowerConvexHull{T, F<:Function} <: AbstractConvexHull{T}
-    hull::HullList{T,F}
-    points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const hull::HullList{T,F}
+    const points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
 end
 function MutableLowerConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
     points = PointList{T}(;sortedby=sortedby)
@@ -59,11 +59,11 @@ See also: [lower_monotonechain](@ref), [lower_jarvismarch](@ref), [addpoint!](@r
 MutableLowerConvexHull{T}(orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableLowerConvexHull{T,F}(orientation,collinear,sortedby)
 
 mutable struct MutableUpperConvexHull{T, F<:Function} <: AbstractConvexHull{T}
-    hull::HullList{T,F}
-    points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const hull::HullList{T,F}
+    const points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
 end
 function MutableUpperConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
     points = PointList{T}(;sortedby=sortedby)

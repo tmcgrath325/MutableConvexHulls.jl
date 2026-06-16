@@ -41,11 +41,11 @@ end
 emptycache!(::Nothing) = nothing
 
 mutable struct ChanConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
-    hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
+    const hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
     subhulls::Vector{MutableConvexHull{T,F}}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
     cache::Union{Nothing, ChanHullCache{T}}
     function ChanConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby, cache=nothing) where {T,F}
         return new(hull, subhulls, orientation, collinear, sortedby, cache)
@@ -59,11 +59,11 @@ end
 ChanConvexHull{T}(orientation::HullOrientation=CCW,collinear::Bool=false,sortedby::F=identity) where {T,F} = ChanConvexHull{T,F}(orientation,collinear,sortedby)
 
 mutable struct ChanLowerConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
-    hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
+    const hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
     subhulls::Vector{MutableLowerConvexHull{T,F}}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
     cache::Union{Nothing, ChanHullCache{T}}
     function ChanLowerConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby, cache=nothing) where {T,F}
         return new(hull, subhulls, orientation, collinear, sortedby, cache)
@@ -77,11 +77,11 @@ end
 ChanLowerConvexHull{T}(orientation::HullOrientation=CCW,collinear::Bool=false,sortedby::F=identity) where {T,F} = ChanLowerConvexHull{T,F}(orientation,collinear,sortedby)
 
 mutable struct ChanUpperConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
-    hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
+    const hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
     subhulls::Vector{MutableUpperConvexHull{T,F}}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
     cache::Union{Nothing, ChanHullCache{T}}
     function ChanUpperConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby, cache=nothing) where {T,F}
         new(hull, subhulls, orientation, collinear, sortedby, cache)
