@@ -15,7 +15,8 @@ tests = [
          "convexhull",
          "chanhull",
          "cache",
-         "testcases"
+         "testcases",
+         "generic_axes",
         ]
 
 @testset "MutableConvexHulls" begin
