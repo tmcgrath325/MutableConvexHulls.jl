@@ -94,10 +94,10 @@ function ChanUpperConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::B
 end
 ChanUpperConvexHull{T}(orientation::HullOrientation=CCW,collinear::Bool=false,sortedby::F=identity) where {T,F} = ChanUpperConvexHull{T,F}(orientation,collinear,sortedby)
 
-function Base.empty!(h::AbstractChanConvexHull) 
+function Base.empty!(h::AbstractChanConvexHull)
     empty!(h.hull)
-    subhulls = [subhulls[1]]
-    empty!(subhulls[1])
+    h.subhulls = [h.subhulls[1]]
+    empty!(h.subhulls[1])
     emptycache!(h.cache)
     return h
 end
