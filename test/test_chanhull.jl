@@ -61,3 +61,23 @@ end
         end
     end
 end
+@testset "chan hull copy" begin
+    coords = [(i + 0.5*j, j - 0.3*i) for i in 1:10 for j in 1:10]
+    for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
+        @testset "$H" begin
+            h = H{eltype(coords)}()
+            mergepoints!(h, coords)
+
+            hc = copy(h)
+            @test hc isa H
+            @test hc == h
+            @test hash(hc) == hash(h)
+            # the copy owns independent subhulls
+            @test all(s1 !== s2 for s1 in h.subhulls for s2 in hc.subhulls)
+            # mutating the copy leaves the original untouched
+            origverts = collect(h)
+            addpoint!(hc, (100.0, 100.0))
+            @test collect(h) == origverts
+        end
+    end
+end

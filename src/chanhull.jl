@@ -102,6 +102,16 @@ function Base.empty!(h::AbstractChanConvexHull)
     return h
 end
 
+# Deep copy: duplicate each subhull, then rebuild the merged hull and cache so
+# the copy shares no linked-list nodes with `h`.
+function Base.copy(h::H) where {T, H<:AbstractChanConvexHull{T}}
+    hcopy = H(h.orientation, h.collinear, h.sortedby)
+    hcopy.subhulls = [copy(sh) for sh in h.subhulls]
+    merge_hull_lists!(hcopy)
+    hcopy.cache = h.cache === nothing ? nothing : deepcopy(h.cache)
+    return hcopy
+end
+
 # Iterating a convex hull returns the data contained in the nodes of its hull list
 Base.iterate(h::AbstractChanConvexHull) = iterate(h, h.hull.head.next)
 Base.iterate(h::AbstractChanConvexHull, node::TargetedListNode) = iterate(h.hull, node)

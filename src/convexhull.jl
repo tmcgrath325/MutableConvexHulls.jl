@@ -93,8 +93,28 @@ Base.eltype(h::AbstractConvexHull) = eltype(h.hull)
 
 Base.:(==)(h1::AbstractConvexHull, h2::AbstractConvexHull) = h1.hull == h2.hull
 
+# Hash the hull-vertex sequence that `==` compares, so equal hulls hash equally
+# and behave correctly as `Dict` keys or `Set` elements.
+function Base.hash(h::AbstractConvexHull, x::UInt)
+    x = hash(:AbstractConvexHull, x)
+    for data in h
+        x = hash(data, x)
+    end
+    return x
+end
+
 Base.empty!(h::AbstractConvexHull) = empty!(h.hull)
 Base.empty(h::H) where H <: AbstractConvexHull = H(h.orientation, h.collinear, h.sortedby)
+
+# Deep copy by replaying the contained points: the result shares no linked-list
+# nodes with `h`, so mutating one hull never affects the other.
+function Base.copy(h::H) where {H<:AbstractConvexHull}
+    hcopy = H(h.orientation, h.collinear, h.sortedby)
+    for node in PointNodeIterator(h)
+        addpoint!(hcopy, node.data)
+    end
+    return hcopy
+end
 
 # Iterating a convex hull returns the data contained in the nodes of its hull list
 Base.iterate(h::AbstractConvexHull) = iterate(h, h.hull.head.next)
