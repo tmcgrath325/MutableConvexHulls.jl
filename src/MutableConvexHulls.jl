@@ -15,7 +15,7 @@ using PairedLinkedLists: PairedLinkedLists,
                          ListNodeIterator, PairedListNode,
                          TargetedLinkedList, TargetedListNode,
                          addtarget!, athead, attail, deletenode!, hastarget,
-                         head, insertafter!, newnode, nodetype, removetarget!, tail
+                         head, insertafter!, newnode, nodetype, removetarget!, search, tail
 
 include("utils.jl")
 include("orientation.jl")
@@ -36,6 +36,6 @@ export monotonechain, lower_monotonechain, upper_monotonechain
 export jarvismarch, lower_jarvismarch, upper_jarvismarch
 export CCW, CW
 export insidehull
-export mergehulls!
+export mergehulls, mergehulls!
 
 end

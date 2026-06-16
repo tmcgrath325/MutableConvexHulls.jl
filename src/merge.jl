@@ -74,6 +74,12 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     merge_hull_lists!(mergedhull, hulltargets, buildinreverse(h), h.orientation, h.collinear, h.sortedby, targetscollinear, partial, upper)
     return h
 end
+"""
+    mergehulls(hull, otherhulls...)
+
+Return a new convex hull containing the points of `hull` and `otherhulls`,
+without mutating any argument. See [`mergehulls!`](@ref) for the in-place form.
+"""
 mergehulls(h::H, others::H...) where H <: AbstractConvexHull = mergehulls!(copy(h), others...)
 
 function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)  

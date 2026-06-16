@@ -1,9 +1,16 @@
+# `insidehull` reads only the ordered hull-vertex list and the orientation,
+# collinear, and sortedby attributes, all shared by a regular and a Chan hull of
+# the same kind, so each kind's test serves both representations.
+const FullHull{T}  = Union{MutableConvexHull{T}, ChanConvexHull{T}}
+const LowerHull{T} = Union{MutableLowerConvexHull{T}, ChanLowerConvexHull{T}}
+const UpperHull{T} = Union{MutableUpperConvexHull{T}, ChanUpperConvexHull{T}}
+
 """
     insidehull(data, hull) -> Bool
 
 Return `true` if the data lies within the interior of `hull` and `false` otherwise.
 """
-function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
+function insidehull(pointdata::T, h::FullHull{T}) where T
     length(h) == 0 && return false
     length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
 
@@ -77,7 +84,7 @@ function insidehull(pointdata::T, h::MutableConvexHull{T}) where T
     return abovelower && belowupper
 end
 
-function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
+function insidehull(pointdata::T, h::LowerHull{T}) where T
     length(h) == 0 && return false
     length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
     ccw = h.orientation === CCW
@@ -130,7 +137,7 @@ function insidehull(pointdata::T, h::MutableLowerConvexHull{T}) where T
     return false
 end
 
-function insidehull(pointdata::T, h::MutableUpperConvexHull{T}) where T
+function insidehull(pointdata::T, h::UpperHull{T}) where T
     length(h) == 0 && return false
     length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
     ccw = h.orientation == CCW

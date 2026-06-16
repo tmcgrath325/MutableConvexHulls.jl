@@ -164,6 +164,14 @@ function removepoint!(h::AbstractChanConvexHull{T}, node::PointNode{T}) where T
     return h, updatedhull
 end
 
+function removepoint!(h::AbstractChanConvexHull{T}, value::T) where T
+    for shull in h.subhulls
+        node = findpointnode(shull.points, value)
+        node === nothing || return removepoint!(h, node)
+    end
+    throw(ArgumentError("No point equal to $value is contained in the convex hull"))
+end
+
 
 function copyfromcache(h::H) where {T,H<:AbstractChanConvexHull{T}}
     @assert !isnothing(h.cache)

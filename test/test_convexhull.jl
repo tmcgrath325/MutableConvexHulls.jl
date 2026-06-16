@@ -83,10 +83,35 @@ end
         end
         averts = collect(a)
         bverts = collect(b)
-        m = MCH.mergehulls(a, b)
+        # `mergehulls` is exported, so it is callable unqualified
+        @test :mergehulls in names(MutableConvexHulls)
+        m = mergehulls(a, b)
         @test collect(a) == averts
         @test collect(b) == bverts
         merged = mergehulls!(copy(a), copy(b))
         @test m == merged
+    end
+end
+
+@testset "removepoint! by value" begin
+    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
+    coords = [boxcoords..., boxcoords...]   # include duplicate points
+    for (H, truthfun) in ((MutableLowerConvexHull, lower_jarvismarch),
+                          (MutableUpperConvexHull, upper_jarvismarch),
+                          (MutableConvexHull, jarvismarch))
+        @testset "$H" begin
+            remaining = shuffle(coords)
+            h = H{eltype(coords)}()
+            mergepoints!(h, copy(remaining))
+            for _ in 1:length(coords)
+                p = rand(remaining)
+                # drop one instance from the reference multiset, then by value from the hull
+                deleteat!(remaining, findfirst(==(p), remaining))
+                removepoint!(h, p)
+                isempty(remaining) ? (@test isempty(h)) : (@test h == truthfun(remaining))
+            end
+            # fail-fast when no contained point equals the value
+            @test_throws ArgumentError removepoint!(h, (-1, -1))
+        end
     end
 end

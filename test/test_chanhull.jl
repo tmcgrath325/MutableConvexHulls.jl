@@ -81,3 +81,32 @@ end
         end
     end
 end
+
+@testset "chan removepoint! by value and insidehull" begin
+    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
+    coords = [boxcoords..., boxcoords...]   # include duplicate points
+    queries = [(i, j) for i in 0:11 for j in 0:11]   # interior, boundary, and outside
+    for (H, R, truthfun) in ((ChanLowerConvexHull, MutableLowerConvexHull, lower_jarvismarch),
+                             (ChanUpperConvexHull, MutableUpperConvexHull, upper_jarvismarch),
+                             (ChanConvexHull,      MutableConvexHull,      jarvismarch))
+        @testset "$H" begin
+            # insidehull on a Chan hull agrees with the equivalent regular hull
+            hc = H{eltype(coords)}(); mergepoints!(hc, copy(coords))
+            hr = R{eltype(coords)}(); mergepoints!(hr, copy(coords))
+            @test all(insidehull(q, hc) == insidehull(q, hr) for q in queries)
+
+            # removepoint! by value tracks the truth hull of the remaining points
+            remaining = shuffle(coords)
+            h = H{eltype(coords)}()
+            mergepoints!(h, copy(remaining))
+            for _ in 1:length(coords)
+                p = rand(remaining)
+                deleteat!(remaining, findfirst(==(p), remaining))
+                removepoint!(h, p)
+                isempty(remaining) ? (@test isempty(h)) : (@test h == truthfun(remaining))
+            end
+            # fail-fast when no contained point equals the value
+            @test_throws ArgumentError removepoint!(h, (-1, -1))
+        end
+    end
+end

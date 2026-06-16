@@ -318,6 +318,35 @@ function removepoint!(h::MutableConvexHull{T}, node::PointNode{T}) where T
     end
 end
 
+# Locate the point node whose data equals `value`, or `nothing` if absent.
+# `search` lands on the last node whose sort key is ≤ that of `value`; scanning
+# back across the equal-key run and comparing full coordinates handles a
+# `sortedby` that maps distinct points to the same key.
+function findpointnode(points::PointList{T}, value::T) where T
+    node = search(points, value)
+    svalue = points.sortedby(value)
+    while !athead(node) && points.sortedby(node.data) == svalue
+        coordsareequal(node.data, value) && return node
+        node = node.prev
+    end
+    return nothing
+end
+
+"""
+    removepoint!(hull, value)
+
+Locate the point equal to `value` contained in `hull` and remove it, delegating
+to [`removepoint!`](@ref)`(hull, node)`. Throws an `ArgumentError` if no point
+equal to `value` is contained in `hull`.
+
+See also: [addpoint!](@ref), [mergepoints!](@ref)
+"""
+function removepoint!(h::AbstractConvexHull{T}, value::T) where T
+    node = findpointnode(h.points, value)
+    node === nothing && throw(ArgumentError("No point equal to $value is contained in the convex hull"))
+    return removepoint!(h, node)
+end
+
 # returns true if all points in a convex hull are collinear
 function allcollinear(h::AbstractConvexHull)
     length(h) < 3 && return true
