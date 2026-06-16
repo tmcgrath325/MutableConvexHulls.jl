@@ -31,11 +31,17 @@ export AbstractConvexHull, MutableConvexHull, MutableLowerConvexHull, MutableUpp
 export AbstractChanConvexHull, ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull
 export HullList, PointList, HullNode, PointNode
 export addpoint!, mergepoints!, removepoint!
-export HullNodeIterator, PointNodeIterator
 export monotonechain, lower_monotonechain, upper_monotonechain
 export jarvismarch, lower_jarvismarch, upper_jarvismarch
 export CCW, CW
 export insidehull
 export mergehulls, mergehulls!
+
+# `HullNodeIterator` and `PointNodeIterator` expose `HullNode`/`PointNode` field
+# layouts, so they are public rather than exported. The `public` keyword exists
+# only on Julia ≥ 1.11; on the LTS these remain reachable as qualified names.
+@static if VERSION >= v"1.11"
+    eval(Expr(:public, :HullNodeIterator, :PointNodeIterator))
+end
 
 end

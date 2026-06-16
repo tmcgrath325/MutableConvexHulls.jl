@@ -150,6 +150,8 @@ Base.iterate(iter::HullNodeIterator) = iterate(iter, iter.start)
 Base.iterate(iter::HullNodeIterator{S}, node::S) where {S<:HullNode} = iter.rev ? (athead(node) ? nothing : (node, node.prev)) :
                                                                                   (attail(node) ? nothing : (node, node.next))
 Base.IteratorSize(::HullNodeIterator) = Base.SizeUnknown()
+Base.IteratorEltype(::Type{<:HullNodeIterator}) = Base.HasEltype()
+Base.eltype(::Type{<:HullNodeIterator{S}}) where {S<:HullNode} = S
 
 
 struct PointNodeIterator{S<:PointNode}
@@ -183,6 +185,8 @@ Base.iterate(iter::PointNodeIterator) = iterate(iter, iter.start)
 Base.iterate(iter::PointNodeIterator{S}, node::S) where S = iter.rev ? (athead(node) ? nothing : (node, node.prev)) :
                                                                        (attail(node) ? nothing : (node, node.next))
 Base.IteratorSize(::PointNodeIterator) = Base.SizeUnknown()
+Base.IteratorEltype(::Type{<:PointNodeIterator}) = Base.HasEltype()
+Base.eltype(::Type{<:PointNodeIterator{S}}) where {S<:PointNode} = S
 
 """
     addpoint!(hull, point)

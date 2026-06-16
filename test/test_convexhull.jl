@@ -54,7 +54,7 @@ end
             @test hash(hc) == hash(h)
             @test hc isa H
             # no linked-list nodes are shared between original and copy
-            @test !any(n1 === n2 for n1 in PointNodeIterator(h) for n2 in PointNodeIterator(hc))
+            @test !any(n1 === n2 for n1 in MCH.PointNodeIterator(h) for n2 in MCH.PointNodeIterator(hc))
             # mutating the copy leaves the original untouched, and vice versa
             origverts = collect(h)
             removepoint!(hc, hc.points.head.next)
@@ -112,6 +112,29 @@ end
             end
             # fail-fast when no contained point equals the value
             @test_throws ArgumentError removepoint!(h, (-1, -1))
+        end
+    end
+end
+
+@testset "node iterator eltype" begin
+    coords = [(i, j) for i in 1:5 for j in 1:5]
+    for H in (MutableLowerConvexHull, MutableUpperConvexHull, MutableConvexHull)
+        @testset "$H" begin
+            h = H{eltype(coords)}()
+            mergepoints!(h, coords)
+
+            hulliter = MCH.HullNodeIterator(h)
+            pointiter = MCH.PointNodeIterator(h)
+
+            # eltype reports the concrete node type rather than `Any`
+            @test eltype(hulliter) === MCH.nodetype(h.hull) !== Any
+            @test eltype(pointiter) === MCH.nodetype(h.points) !== Any
+            @test Base.IteratorEltype(hulliter) === Base.HasEltype()
+            @test Base.IteratorEltype(pointiter) === Base.HasEltype()
+
+            # collecting yields a vector typed by that eltype
+            @test collect(hulliter) isa Vector{eltype(hulliter)}
+            @test collect(pointiter) isa Vector{eltype(pointiter)}
         end
     end
 end
