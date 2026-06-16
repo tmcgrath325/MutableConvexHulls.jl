@@ -82,6 +82,29 @@ end
     end
 end
 
+@testset "chan removepoint! by HullNode" begin
+    coords = [(i, j) for i in 1:5 for j in 1:5]
+    for (H, truthfun) in ((ChanConvexHull,      jarvismarch),
+                          (ChanLowerConvexHull,  lower_jarvismarch),
+                          (ChanUpperConvexHull,  upper_jarvismarch))
+        @testset "$H" begin
+            h = H{eltype(coords)}()
+            mergepoints!(h, coords)
+            # HullNode comes from a subhull's hull list, not from h.hull
+            subhull = h.subhulls[1]
+            hullnode = subhull.hull.head.next
+            vertex = hullnode.data
+
+            h2 = H{eltype(coords)}()
+            mergepoints!(h2, coords)
+
+            removepoint!(h, hullnode)  # by HullNode (chanhull.jl dispatch)
+            removepoint!(h2, vertex)   # by value — same expected result
+            @test h == h2
+        end
+    end
+end
+
 @testset "chan removepoint! by value and insidehull" begin
     boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     coords = [boxcoords..., boxcoords...]   # include duplicate points

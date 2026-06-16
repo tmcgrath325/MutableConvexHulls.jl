@@ -135,6 +135,84 @@ end
             # collecting yields a vector typed by that eltype
             @test collect(hulliter) isa Vector{eltype(hulliter)}
             @test collect(pointiter) isa Vector{eltype(pointiter)}
+
+            # node-based HullNodeIterator constructor: starting from a specific node
+            # produces the same suffix as collecting from that position in the full hull
+            allnodes = collect(MCH.HullNodeIterator(h))
+            @test collect(MCH.HullNodeIterator(allnodes[1])) == allnodes
+            length(allnodes) >= 2 &&
+                @test collect(MCH.HullNodeIterator(allnodes[2])) == allnodes[2:end]
+        end
+    end
+end
+
+@testset "removepoint! by HullNode" begin
+    coords = [(i, j) for i in 1:5 for j in 1:5]
+    for (H, truthfun) in ((MutableLowerConvexHull, lower_jarvismarch),
+                          (MutableUpperConvexHull, upper_jarvismarch),
+                          (MutableConvexHull,      jarvismarch))
+        @testset "$H" begin
+            h = H{eltype(coords)}()
+            mergepoints!(h, coords)
+            hullnode = h.hull.head.next
+            vertex = hullnode.data
+
+            h2 = H{eltype(coords)}()
+            mergepoints!(h2, coords)
+
+            removepoint!(h, hullnode)  # by HullNode
+            removepoint!(h2, vertex)   # by value — same expected result
+            @test h == h2
+        end
+    end
+end
+
+@testset "mergepoints! Matrix input" begin
+    coords = [(i, j) for i in 1:5 for j in 1:5]
+    m = [p[k] for p in coords, k in 1:2]
+    for H in (MutableLowerConvexHull, MutableUpperConvexHull, MutableConvexHull)
+        @testset "$H" begin
+            h_vec = H{eltype(coords)}(); mergepoints!(h_vec, coords)
+            h_mat = H{eltype(coords)}(); mergepoints!(h_mat, m)
+            @test h_vec == h_mat
+        end
+    end
+end
+
+@testset "insidehull with AbstractNode" begin
+    # The convex hull of the 5×5 grid is the corner rectangle.
+    # Pass hull nodes directly (the AbstractNode dispatch) and verify the inside/outside
+    # result, including the collinear boundary behaviour.
+    coords = [(i, j) for i in 1:5 for j in 1:5]
+    for collinear in (false, true)
+        @testset "collinear=$collinear" begin
+            h = MutableConvexHull{eltype(coords)}(CCW, collinear)
+            mergepoints!(h, coords)
+            # Strictly interior and exterior points are unaffected by the collinear flag.
+            @test insidehull((3, 3), h) == true
+            @test insidehull((10, 10), h) == false
+            # h.hull.head.next is the bottom-left corner (1,1), on the hull boundary.
+            # With collinear=false the ≥ test includes the boundary; with collinear=true the > does not.
+            @test insidehull(h.hull.head.next, h) == !collinear
+        end
+    end
+end
+
+@testset "removepoint! by value, shared sortedby key" begin
+    # With sortedby = first coordinate, (1,0) and (1,2) map to the same key.
+    # findpointnode must scan back past one to locate the other.
+    sb = x -> x[1]
+    pts = [(0, 1), (2, 1), (1, 0), (1, 2)]
+    for (H, truthfun) in ((MutableConvexHull,      jarvismarch),
+                          (MutableLowerConvexHull,  lower_jarvismarch),
+                          (MutableUpperConvexHull,  upper_jarvismarch))
+        @testset "$H" begin
+            h = H{eltype(pts), typeof(sb)}(CCW, false, sb)
+            for p in pts
+                addpoint!(h, p)
+            end
+            removepoint!(h, (1, 0))
+            @test h == truthfun(filter(!=((1, 0)), pts); sortedby=sb)
         end
     end
 end

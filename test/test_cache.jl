@@ -18,6 +18,21 @@ function build_random_hull(H::Type{<:AbstractConvexHull}, n::Int=1024, m::Int=4;
     return h
 end
 
+@testset "emptycache! with ChanHullCache" begin
+    for H in [ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull]
+        @testset "$H" begin
+            coords = [(rand(), randn()) for _ in 1:20]
+            h = H{eltype(coords)}()
+            h.cache = ChanHullCache{eltype(coords)}()
+            mergepoints!(h, coords)
+            @test !isempty(h.cache.data)
+            empty!(h)
+            @test isempty(h.cache.data)
+            @test isempty(h)
+        end
+    end
+end
+
 @testset "cache" begin
     for H in [ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull]
         for o in [CCW, CW]

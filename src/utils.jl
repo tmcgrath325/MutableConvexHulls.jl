@@ -1,5 +1,4 @@
 # planar coordinates
-coords(data) = (data[1], data[2])
 coordsareequal(data1, data2) = data1[1] == data2[1] && data1[2] == data2[2]
 
 # 2D subtraction of data

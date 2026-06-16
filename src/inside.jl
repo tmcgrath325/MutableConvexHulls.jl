@@ -190,4 +190,4 @@ function insidehull(pointdata::T, h::UpperHull{T}) where T
     return false
 end
 
-insidehull(pointnode::PairedListNode, h::AbstractConvexHull) = insidehull(pointnode.data, h)
+insidehull(pointnode::AbstractNode, h::AbstractConvexHull) = insidehull(pointnode.data, h)

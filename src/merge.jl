@@ -1,32 +1,36 @@
-function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
-    pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
-    pointslist.len == 1 && return head(pointslist)
-    coordsareequal(head(pointslist).data, tail(pointslist).data) && throw(ArgumentError("All points in the list are duplicates."))
-    # find nodes around the start of the list that are distinct from the query data
-    prevnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=true))
-    prevnode === nothing && return head(pointslist)
-    currentnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=false))
-    currentnode === prevnode && return currentnode
-    nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-    if nextnode === nothing 
-        return betterturn(prevedge, query.data, prevnode.data, currentnode.data) ? currentnode : prevnode
-    end
-    # initialize comparision with previous node
-    prev_worse = !betterturn(prevedge, query.data, currentnode.data, prevnode.data)
-
-    while nextnode !== nothing
-        # since points are sorted, the next point should present a "better turn" than the preceding or following points
-        next_worse = !betterturn(prevedge, query.data, currentnode.data, nextnode.data)
-        if prev_worse && next_worse
-            return currentnode
-        end
-        prev_worse = !next_worse
-        prevnode = currentnode
-        currentnode = nextnode
-        nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-    end
-    return currentnode
-end
+# jarvissortedsearch is a potential optimization of jarvissearch that exploits the
+# sorted order of the hull list. It is not currently used (jarvissearch is used instead)
+# but is retained as a reference for future optimization work.
+#
+# function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
+#     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
+#     pointslist.len == 1 && return head(pointslist)
+#     coordsareequal(head(pointslist).data, tail(pointslist).data) && throw(ArgumentError("All points in the list are duplicates."))
+#     # find nodes around the start of the list that are distinct from the query data
+#     prevnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=true))
+#     prevnode === nothing && return head(pointslist)
+#     currentnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=false))
+#     currentnode === prevnode && return currentnode
+#     nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
+#     if nextnode === nothing
+#         return betterturn(prevedge, query.data, prevnode.data, currentnode.data) ? currentnode : prevnode
+#     end
+#     # initialize comparision with previous node
+#     prev_worse = !betterturn(prevedge, query.data, currentnode.data, prevnode.data)
+#
+#     while nextnode !== nothing
+#         # since points are sorted, the next point should present a "better turn" than the preceding or following points
+#         next_worse = !betterturn(prevedge, query.data, currentnode.data, nextnode.data)
+#         if prev_worse && next_worse
+#             return currentnode
+#         end
+#         prev_worse = !next_worse
+#         prevnode = currentnode
+#         currentnode = nextnode
+#         nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
+#     end
+#     return currentnode
+# end
 
 
 """
