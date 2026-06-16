@@ -1,5 +1,3 @@
-using PairedLinkedLists: AbstractPairedListNode, AbstractPairedSkipNode, AbstractPairedLinkedList, AbstractPairedSkipList, SkipListCache
-
 abstract type AbstractHullNode{T,L,F} <: AbstractPairedListNode{T,L} end
 abstract type AbstractHullList{T,F} <: AbstractPairedLinkedList{T} end
 abstract type AbstractPointList{T,R,N,F} <: AbstractPairedSkipList{T,F} end

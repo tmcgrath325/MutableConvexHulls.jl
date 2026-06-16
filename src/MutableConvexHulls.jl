@@ -6,9 +6,16 @@ See also [MutableConvexHull](@ref), [LowerMutableConvexHull](@ref), [UpperMutabl
 """
 module MutableConvexHulls
 
-using PairedLinkedLists
-using PairedLinkedLists: AbstractNode, AbstractList
-using DoubleFloats
+using DoubleFloats: DoubleFloats, DoubleFloat
+using PairedLinkedLists: PairedLinkedLists,
+                         AbstractNode, AbstractList, AbstractLinkedList,
+                         AbstractPairedListNode, AbstractPairedSkipNode,
+                         AbstractPairedLinkedList, AbstractPairedSkipList,
+                         SkipListCache,
+                         ListNodeIterator, PairedListNode,
+                         TargetedLinkedList, TargetedListNode,
+                         addtarget!, athead, attail, deletenode!, hastarget,
+                         head, insertafter!, newnode, nodetype, removetarget!, tail
 
 include("utils.jl")
 include("orientation.jl")

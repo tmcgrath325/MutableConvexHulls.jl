@@ -3,6 +3,7 @@ using PairedLinkedLists
 using Test
 using Random
 using Aqua
+using ExplicitImports
 const MCH = MutableConvexHulls
 
 Random.seed!(1234)
@@ -29,6 +30,12 @@ end
 
 @testset "Aqua" begin
     Aqua.test_all(MutableConvexHulls)
+end
+
+@testset "ExplicitImports" begin
+    test_explicit_imports(MutableConvexHulls;
+                          all_explicit_imports_are_public   = false,
+                          all_qualified_accesses_are_public = false)
 end
 
 end
