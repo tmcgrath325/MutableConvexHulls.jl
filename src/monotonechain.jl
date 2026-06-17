@@ -113,15 +113,11 @@ function monotonechain!(h::MutableConvexHull{T},
     lowerhulldups = Bool[]
     hullnode = h.hull.head
     len = 0
-    # @show hullnode.data, h.hull
-    # println("Forward")
     for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
         o = len == 1 ? hullnode.data : hullnode.prev.data
         a = hullnode.data
         b = node.data
-        # println("   consider $(b)")
         if i > 1 && coordsareequal(a,b)
-            # println("      ignore equal coords: $(a), $(b)")
             push!(lowerhullidxs, i)
             push!(lowerhulldups, true)
             if hastarget(node)
@@ -130,14 +126,12 @@ function monotonechain!(h::MutableConvexHull{T},
             continue
         end
         while len >= 2 && wrongturn(o, a, b)
-            # println("      remove $(a)")
             while(lowerhulldups[end])
                 pop!(lowerhulldups)
                 pop!(lowerhullidxs)
             end
             removed = pop!(lowerhullidxs)
             pop!(lowerhulldups)
-            # println("         removed idx: $(removed)")
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
             len -= 1
@@ -145,16 +139,13 @@ function monotonechain!(h::MutableConvexHull{T},
             a = hullnode.data
         end
         if !hastarget(node) # avoid overwriting the targets for points already on the hull
-            # println("      add $(b)")
             insertafter!(newnode(h.hull, b), hullnode)
             hullnode = hullnode.next
             addtarget!(hullnode, node)
         else
             if node.target === hullnode.next
-                # println("      keep $(hullnode.next.data)")
                 hullnode = hullnode.next
             else 
-                # println("      move $(node.data) to after $(hullnode.data)")
                 movednode = deletenode!(node.target)
                 insertafter!(movednode, hullnode)
                 addtarget!(movednode, node)
@@ -164,13 +155,7 @@ function monotonechain!(h::MutableConvexHull{T},
         push!(lowerhullidxs, i)
         push!(lowerhulldups, false)
         len += 1
-        # println("      lower idxs: $(lowerhullidxs)")
     end
-
-    # @show h.hull
-    # @show lowerhullidxs
-    # @show len
-    # println("Backward")
 
     lidx = length(lowerhullidxs)
     len = 1
@@ -178,23 +163,19 @@ function monotonechain!(h::MutableConvexHull{T},
         o = len == 1 ? hullnode.data : hullnode.prev.data
         a = hullnode.data
         b = node.data
-        # println("   consider $(b)")
         if lidx > 1 && i === h.points.len - lowerhullidxs[lidx] + 1
             lidx -= 1
             if node.target.prev !== hullnode
-                # println("      ignore upper hull: $(b)")
                 continue
             end
         end 
         if coordsareequal(a,b)
-            # println("      ignore equal coords: $(a), $(b)")
             if hastarget(node)
                 deletenode!(node.target)
             end
             continue
         end
         while len >= 2 && wrongturn(o, a, b)
-            # println("      remove $(a)")
             hullnode = hullnode.prev
             deletenode!(hullnode.next)
             len -= 1
@@ -202,17 +183,13 @@ function monotonechain!(h::MutableConvexHull{T},
             a = hullnode.data
         end
         if !hastarget(node) # avoid overwriting the targets for points already on the hull
-            # println("      add $(b)")
             insertafter!(newnode(h.hull, b), hullnode)
             hullnode = hullnode.next
             addtarget!(hullnode, node)
         else
-            # println("      existing hull node $(node.data)")
             if node.target === hullnode.next
-                # println("      keep $(hullnode.next.data)")
                 hullnode = hullnode.next
             elseif lidx === 1 && i === lowerhullidxs[1]
-                # println("      move $(node.data) to after $(hullnode.data)")
                 movednode = deletenode!(node.target)
                 insertafter!(movednode, hullnode)
                 addtarget!(movednode, node)
@@ -225,7 +202,6 @@ function monotonechain!(h::MutableConvexHull{T},
         end
         len += 1
     end
-    # @show h.hull
     return h
 end
 
