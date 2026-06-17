@@ -221,6 +221,37 @@ end
     end
 end
 
+@testset "Base.in delegates to insidehull" begin
+    coords = [(i, j) for i in 1:5 for j in 1:5]
+    queries = [(i, j) for i in 0:6 for j in 0:6]
+    # ∈ / in must agree with insidehull for every hull kind and collinear setting.
+    for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+        for collinear in (false, true)
+            @testset "$H collinear=$collinear" begin
+                h = H{eltype(coords)}(; orientation=CCW, collinear)
+                mergepoints!(h, coords)
+                @test all((q in h) == insidehull(q, h) for q in queries)
+                @test all((q ∈ h) == insidehull(q, h) for q in queries)
+            end
+        end
+    end
+    # The full hull of the 1:5 grid is the 1..5 square. Strictly interior points
+    # are inside and exterior points are outside regardless of `collinear`; with
+    # the default `collinear=false`, boundary points (edges and corners) are inside.
+    @testset "interior / exterior" begin
+        for collinear in (false, true)
+            h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear)
+            mergepoints!(h, coords)
+            @test (3, 3) in h        # strictly interior
+            @test !((10, 10) in h)   # exterior
+        end
+        h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear=false)
+        mergepoints!(h, coords)
+        @test (1, 1) in h            # corner, boundary-inclusive when collinear=false
+        @test (1, 3) in h            # edge
+    end
+end
+
 @testset "removepoint! by value, shared sortedby key" begin
     # With sortedby = first coordinate, (1,0) and (1,2) map to the same key.
     # findpointnode must scan back past one to locate the other.

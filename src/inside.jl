@@ -8,7 +8,12 @@ const UpperHull{T} = Union{MutableUpperConvexHull{T}, ChanUpperConvexHull{T}}
 """
     insidehull(data, hull) -> Bool
 
-Return `true` if the data lies within the interior of `hull` and `false` otherwise.
+Return `true` if `data` lies inside `hull` and `false` otherwise.
+
+Boundary handling is governed by `hull.collinear`. With the default
+`collinear=false`, points on an edge or vertex of `hull` count as inside.
+
+`data ∈ hull` (equivalently `data in hull`) is shorthand for `insidehull(data, hull)`.
 """
 function insidehull(pointdata::T, h::FullHull{T}) where T
     length(h) == 0 && return false
@@ -191,3 +196,5 @@ function insidehull(pointdata::T, h::UpperHull{T}) where T
 end
 
 insidehull(pointnode::AbstractNode, h::AbstractConvexHull) = insidehull(pointnode.data, h)
+
+Base.in(item, h::AbstractConvexHull) = insidehull(item, h)

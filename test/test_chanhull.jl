@@ -118,6 +118,10 @@ end
             hr = R{eltype(coords)}(); mergepoints!(hr, copy(coords))
             @test all(insidehull(q, hc) == insidehull(q, hr) for q in queries)
 
+            # `point in hull` delegates to insidehull on Chan hulls too
+            @test all((q in hc) == insidehull(q, hc) for q in queries)
+            @test all((q ∈ hc) == insidehull(q, hc) for q in queries)
+
             # removepoint! by value tracks the truth hull of the remaining points
             remaining = shuffle(coords)
             h = H{eltype(coords)}()
