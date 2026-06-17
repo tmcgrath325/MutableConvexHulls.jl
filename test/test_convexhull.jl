@@ -91,6 +91,17 @@ end
         merged = mergehulls!(copy(a), copy(b))
         @test m == merged
     end
+
+    @testset "mergehulls! rejects Chan hulls" begin
+        # Chan hulls lack a .points field; they must not silently crash with a
+        # field-access error — the caller should get a MethodError instead.
+        T = Tuple{Float64,Float64}
+        for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
+            h = H{T}()
+            @test_throws MethodError mergehulls!(h, h)
+            @test_throws MethodError mergehulls(h, h)
+        end
+    end
 end
 
 @testset "constructor keyword API" begin
