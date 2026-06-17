@@ -113,4 +113,13 @@
             @test MCH.jarvismarch!(h1) isa H
         end
     end
+
+    @testset "jarvismarch! rejects an empty hull" begin
+        T = Tuple{Int,Int}
+        for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+            h = H{T}()
+            @test_throws ArgumentError MCH.jarvismarch!(h.hull, h.hull.target, h.collinear, h.orientation, MCH.DOWN)
+            @test_throws "at least one point" MCH.jarvismarch!(h.hull, h.hull.target, h.collinear, h.orientation, MCH.DOWN)
+        end
+    end
 end

@@ -174,7 +174,7 @@ end
 
 
 function copyfromcache(h::H) where {T,H<:AbstractChanConvexHull{T}}
-    @assert !isnothing(h.cache)
+    isnothing(h.cache) && throw(ArgumentError("copyfromcache requires a hull with an initialized cache, but h.cache is nothing"))
     hcopy = H(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
     hcopy.cache = ChanHullCache{T}()
     hcopy.subhulls[1].points.cache = typeof(h.subhulls[1].points.cache)()
@@ -192,8 +192,12 @@ function copyfromcache(h::H) where {T,H<:AbstractChanConvexHull{T}}
                 mergepoints!(hcopy.subhulls[currentshullidx], pointstoadd)
             else
                 pointstoadd = sort(pointstoadd; by = h.sortedby)
-                @assert pointstoadd == h.subhulls[currentshullidx].points.cache.data[(length(hcopy.subhulls[currentshullidx].points.cache.data)+1):shullcounters[currentshullidx]]
-                @assert levelstoadd == h.subhulls[currentshullidx].points.cache.levels[(length(hcopy.subhulls[currentshullidx].points.cache.levels)+1):shullcounters[currentshullidx]]
+                # Internal invariant: the points and levels reconstructed for this
+                # subhull must equal those recorded in its skip-list cache. A mismatch
+                # means the cache and skip-list have diverged. Thrown rather than
+                # @assert so the check runs regardless of optimization level.
+                pointstoadd == h.subhulls[currentshullidx].points.cache.data[(length(hcopy.subhulls[currentshullidx].points.cache.data)+1):shullcounters[currentshullidx]] || throw(AssertionError("copyfromcache: reconstructed points disagree with the subhull's skip-list cache"))
+                levelstoadd == h.subhulls[currentshullidx].points.cache.levels[(length(hcopy.subhulls[currentshullidx].points.cache.levels)+1):shullcounters[currentshullidx]] || throw(AssertionError("copyfromcache: reconstructed levels disagree with the subhull's skip-list cache"))
                 for (point, level) in zip(pointstoadd, levelstoadd)
                     PairedLinkedLists.pushskip!(hcopy.subhulls[currentshullidx].points, point, level)
                     monotonechain!(hcopy.subhulls[currentshullidx])

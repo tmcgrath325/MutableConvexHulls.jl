@@ -33,6 +33,15 @@ end
     end
 end
 
+@testset "copyfromcache requires an initialized cache" begin
+    for H in [ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull]
+        h = H{Tuple{Float64,Float64}}()
+        @test isnothing(h.cache)
+        @test_throws ArgumentError MutableConvexHulls.copyfromcache(h)
+        @test_throws "initialized cache" MutableConvexHulls.copyfromcache(h)
+    end
+end
+
 @testset "cache" begin
     for H in [ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull]
         for o in [CCW, CW]

@@ -25,7 +25,7 @@ Each node in the list should contain a two-dimensional point, and the nodes are 
 """
 function jarvismarch!(hull::Union{AbstractConvexHull{T},AbstractList{T}}, pointslist, collinear, orientation, initedge, stop::Union{PointNode{T},HullNode{T},Nothing}=nothing) where T
     # pointslist = h.hull.target   
-    @assert length(hull) > 0
+    length(hull) > 0 || throw(ArgumentError("jarvismarch! requires a hull containing at least one point"))
     if isnothing(stop)
         stop = head(hull)
     end
