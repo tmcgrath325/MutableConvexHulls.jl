@@ -136,7 +136,7 @@ function jarvismarch!(h::MutableUpperConvexHull)
         push!(h.hull, first(h.hull.target))
         addtarget!(head(h.hull), head(h.hull.target))
     end
-    length(h.hull.target) <= 1 && return h.hull
+    length(h.hull.target) <= 1 && return h
 
     # select the appropriate starting and stopping nodes
     f = node -> h.sortedby(node.data)

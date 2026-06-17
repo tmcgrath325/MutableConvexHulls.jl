@@ -102,4 +102,15 @@
         @test collect(lower_jarvismarch(m; collinear=true).hull) == collect(lower_jarvismarch(boxcoords; collinear=true).hull)
         @test collect(upper_jarvismarch(m; sortedby=by).hull) == collect(upper_jarvismarch(boxcoords; sortedby=by).hull)
     end
+
+    @testset "jarvismarch! return type — 0 and 1 point" begin
+        T = Tuple{Int,Int}
+        for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+            h0 = H{T}()
+            @test MCH.jarvismarch!(h0) isa H
+            h1 = H{T}()
+            addpoint!(h1, (1, 1))
+            @test MCH.jarvismarch!(h1) isa H
+        end
+    end
 end
