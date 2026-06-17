@@ -2,16 +2,16 @@ using Random
 using PairedLinkedLists: getnode, SkipListCache
 using MutableConvexHulls: ChanHullCache, chanhullsidentical
 
-function build_random_hull(H::Type{<:AbstractConvexHull}, n::Int=1024, m::Int=4; subhullcaches=true, orientation=CCW, collinear::Bool=false, sortedby=identity)
-    coords = [(rand(), randn()) for i=1:n]
+function build_random_hull(H::Type{<:AbstractConvexHull}, n::Int = 1024, m::Int = 4; subhullcaches = true, orientation = CCW, collinear::Bool = false, sortedby = identity)
+    coords = [(rand(), randn()) for i in 1:n]
 
     h = H{eltype(coords)}(; orientation, collinear, sortedby)
     h.cache = ChanHullCache{eltype(coords)}()
     if subhullcaches
         h.subhulls[1].points.cache = SkipListCache{eltype(coords)}()
     end
-    for i=1:Int(ceil(n/m))
-        mergepoints!(h, coords[(i-1)*m+1:min(i*m,n)])
+    for i in 1:Int(ceil(n / m))
+        mergepoints!(h, coords[((i - 1) * m + 1):min(i * m, n)])
         popidx = rand(1:length(h.hull))
         removepoint!(h, getnode(h.hull, popidx))
     end
@@ -35,7 +35,7 @@ end
 
 @testset "copyfromcache requires an initialized cache" begin
     for H in [ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull]
-        h = H{Tuple{Float64,Float64}}()
+        h = H{Tuple{Float64, Float64}}()
         @test isnothing(h.cache)
         @test_throws ArgumentError MutableConvexHulls.copyfromcache(h)
         @test_throws "initialized cache" MutableConvexHulls.copyfromcache(h)
@@ -48,8 +48,8 @@ end
             for c in [false, true]
                 for sb in [identity, x -> (x[1], -x[2])]
                     for shcaches in [false, true]
-                        for i=1:10
-                            h = build_random_hull(H; subhullcaches=shcaches, orientation=o, collinear=c, sortedby=sb)
+                        for i in 1:10
+                            h = build_random_hull(H; subhullcaches = shcaches, orientation = o, collinear = c, sortedby = sb)
                             h2 = MutableConvexHulls.copyfromcache(h)
                             @test h == h2
                             if shcaches

@@ -1,37 +1,37 @@
 @testset "chan hulls, unique points" begin
-    boxcoords = [(i,j) for i in 1:10 for j in 1:10]
+    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     by = x -> (x[1], -x[2])
     n = 10
-    
+
     chanhulltestset("lower chan hull", n, by, boxcoords, ChanLowerConvexHull, lower_jarvismarch)
     chanhulltestset("upper chan hull", n, by, boxcoords, ChanUpperConvexHull, upper_jarvismarch)
-    chanhulltestset("chan hull",       n, by, boxcoords, ChanConvexHull,      jarvismarch)
+    chanhulltestset("chan hull", n, by, boxcoords, ChanConvexHull, jarvismarch)
 end
 
 @testset "chan hulls, duplicate points" begin
-    boxcoords = [(i,j) for i in 1:10 for j in 1:10]
+    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     boxcoords = [boxcoords..., boxcoords..., boxcoords...]
     by = x -> (x[1], -x[2])
     n = 10
-    
+
     chanhulltestset("lower chan hull", n, by, boxcoords, ChanLowerConvexHull, lower_jarvismarch)
     chanhulltestset("upper chan hull", n, by, boxcoords, ChanUpperConvexHull, upper_jarvismarch)
-    chanhulltestset("chan hull",       n, by, boxcoords, ChanConvexHull,      jarvismarch)
+    chanhulltestset("chan hull", n, by, boxcoords, ChanConvexHull, jarvismarch)
 end
 
 @testset "chan hulls, random data with duplicates" begin
-    coords = [(randn(),randn()) for i in 1:10 for j in 1:10]
+    coords = [(randn(), randn()) for i in 1:10 for j in 1:10]
     coords = [coords..., coords..., coords...]
     by = x -> (x[1], -x[2])
     n = 10
 
     chanhulltestset("lower chan hull", n, by, coords, ChanLowerConvexHull, lower_jarvismarch)
     chanhulltestset("upper chan hull", n, by, coords, ChanUpperConvexHull, upper_jarvismarch)
-    chanhulltestset("chan hull",       n, by, coords, ChanConvexHull,      jarvismarch)
+    chanhulltestset("chan hull", n, by, coords, ChanConvexHull, jarvismarch)
 end
 
 @testset "chan hull AbstractConvexHull interface" begin
-    coords = [(i,j) for i in 1:10 for j in 1:10]
+    coords = [(i, j) for i in 1:10 for j in 1:10]
     for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
         @testset "$H" begin
             h = H{eltype(coords)}()
@@ -62,7 +62,7 @@ end
     end
 end
 @testset "chan hull copy" begin
-    coords = [(i + 0.5*j, j - 0.3*i) for i in 1:10 for j in 1:10]
+    coords = [(i + 0.5 * j, j - 0.3 * i) for i in 1:10 for j in 1:10]
     for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
         @testset "$H" begin
             h = H{eltype(coords)}()
@@ -84,9 +84,11 @@ end
 
 @testset "chan removepoint! by HullNode" begin
     coords = [(i, j) for i in 1:5 for j in 1:5]
-    for (H, truthfun) in ((ChanConvexHull,      jarvismarch),
-                          (ChanLowerConvexHull,  lower_jarvismarch),
-                          (ChanUpperConvexHull,  upper_jarvismarch))
+    for (H, truthfun) in (
+            (ChanConvexHull, jarvismarch),
+            (ChanLowerConvexHull, lower_jarvismarch),
+            (ChanUpperConvexHull, upper_jarvismarch),
+        )
         @testset "$H" begin
             h = H{eltype(coords)}()
             mergepoints!(h, coords)
@@ -109,9 +111,11 @@ end
     boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     coords = [boxcoords..., boxcoords...]   # include duplicate points
     queries = [(i, j) for i in 0:11 for j in 0:11]   # interior, boundary, and outside
-    for (H, R, truthfun) in ((ChanLowerConvexHull, MutableLowerConvexHull, lower_jarvismarch),
-                             (ChanUpperConvexHull, MutableUpperConvexHull, upper_jarvismarch),
-                             (ChanConvexHull,      MutableConvexHull,      jarvismarch))
+    for (H, R, truthfun) in (
+            (ChanLowerConvexHull, MutableLowerConvexHull, lower_jarvismarch),
+            (ChanUpperConvexHull, MutableUpperConvexHull, upper_jarvismarch),
+            (ChanConvexHull, MutableConvexHull, jarvismarch),
+        )
         @testset "$H" begin
             # insidehull on a Chan hull agrees with the equivalent regular hull
             hc = H{eltype(coords)}(); mergepoints!(hc, copy(coords))

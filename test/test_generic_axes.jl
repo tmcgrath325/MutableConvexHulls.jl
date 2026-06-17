@@ -10,12 +10,12 @@
 
     for (label, input) in (("offset", opts), ("view", vpts))
         @testset "$label input" begin
-            @test monotonechain(input)       == monotonechain(pts)
+            @test monotonechain(input) == monotonechain(pts)
             @test lower_monotonechain(input) == lower_monotonechain(pts)
             @test upper_monotonechain(input) == upper_monotonechain(pts)
-            @test jarvismarch(input)         == jarvismarch(pts)
-            @test lower_jarvismarch(input)   == lower_jarvismarch(pts)
-            @test upper_jarvismarch(input)   == upper_jarvismarch(pts)
+            @test jarvismarch(input) == jarvismarch(pts)
+            @test lower_jarvismarch(input) == lower_jarvismarch(pts)
+            @test upper_jarvismarch(input) == upper_jarvismarch(pts)
 
             let ref = MutableConvexHull{eltype(pts)}()
                 mergepoints!(ref, pts)
@@ -52,12 +52,12 @@
 
         for (label, input) in (("offset", ompat), ("view", vmat), ("adjoint", amat))
             @testset "$label input" begin
-                @test monotonechain(input)       == monotonechain(pts)
+                @test monotonechain(input) == monotonechain(pts)
                 @test lower_monotonechain(input) == lower_monotonechain(pts)
                 @test upper_monotonechain(input) == upper_monotonechain(pts)
-                @test jarvismarch(input)         == jarvismarch(pts)
-                @test lower_jarvismarch(input)   == lower_jarvismarch(pts)
-                @test upper_jarvismarch(input)   == upper_jarvismarch(pts)
+                @test jarvismarch(input) == jarvismarch(pts)
+                @test lower_jarvismarch(input) == lower_jarvismarch(pts)
+                @test upper_jarvismarch(input) == upper_jarvismarch(pts)
 
                 let ref = MutableConvexHull{eltype(pts)}()
                     mergepoints!(ref, pts)

@@ -1,7 +1,7 @@
 # `insidehull` reads only the ordered hull-vertex list and the orientation,
 # collinear, and sortedby attributes, all shared by a regular and a Chan hull of
 # the same kind, so each kind's test serves both representations.
-const FullHull{T}  = Union{MutableConvexHull{T}, ChanConvexHull{T}}
+const FullHull{T} = Union{MutableConvexHull{T}, ChanConvexHull{T}}
 const LowerHull{T} = Union{MutableLowerConvexHull{T}, ChanLowerConvexHull{T}}
 const UpperHull{T} = Union{MutableUpperConvexHull{T}, ChanUpperConvexHull{T}}
 
@@ -19,7 +19,7 @@ default `collinear=false` treats hull edges as inside; `collinear=true` treats
 them as outside (so they will be added to the hull on merge).
 
 """
-function insidehull(pointdata::T, h::FullHull{T}) where T
+function insidehull(pointdata::T, h::FullHull{T}) where {T}
     length(h) == 0 && return false
     length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
 
@@ -39,22 +39,22 @@ function insidehull(pointdata::T, h::FullHull{T}) where T
                 alreadycheckedlower = true
             elseif !abovelower
                 # if the point lies along the extreme left or right edge of the entire hull...
-                if pointdata[1] == prevnode.data[1] == nextnode.data[1] 
-                    if h.collinear 
-                        abovelower = (coordsareequal(pointdata, nextnode.data) || coordsareequal(pointdata, prevnode.data)) 
+                if pointdata[1] == prevnode.data[1] == nextnode.data[1]
+                    if h.collinear
+                        abovelower = (coordsareequal(pointdata, nextnode.data) || coordsareequal(pointdata, prevnode.data))
                     else
                         abovelower = nextnode.data[2] >= prevnode.data[2] ? prevnode.data[2] <= pointdata[2] <= nextnode.data[2] :
-                                                                            prevnode.data[2] >= pointdata[2] >= nextnode.data[2]
+                            prevnode.data[2] >= pointdata[2] >= nextnode.data[2]
                     end
                     abovelower && return true
                     nextnode.data != nextnextnode.data && return false
-                # if the point is even with the previous node...
+                    # if the point is even with the previous node...
                 elseif pointdata[1] == prevnode.data[1]
                     abovelower = coordsareequal(pointdata, prevnode.data) || (h.collinear ? pointdata[2] > prevnode.data[2] : pointdata[2] >= prevnode.data[2])
-                # if the point is even with the next node...
+                    # if the point is even with the next node...
                 elseif pointdata[1] == nextnode.data[1] !== nextnextnode.data[1]
                     abovelower = coordsareequal(pointdata, nextnode.data) || (h.collinear ? pointdata[2] > nextnode.data[2] : pointdata[2] >= nextnode.data[2])
-                # if the point is in between the previous and next nodes...
+                    # if the point is in between the previous and next nodes...
                 elseif ccw ? (prevnode.data[1] < pointdata[1] < nextnode.data[1]) : (prevnode.data[1] > pointdata[1] > nextnode.data[1])
                     yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
                     if h.collinear ? pointdata[2] > yhull : pointdata[2] >= yhull
@@ -67,20 +67,20 @@ function insidehull(pointdata::T, h::FullHull{T}) where T
             !abovelower && return false # we can stop if we already know the point is outside the hull
             # if the point lies along the extreme left or right edge of the entire hull...
             if pointdata[1] == prevnode.data[1] == nextnode.data[1]
-                if h.collinear 
-                    belowupper = (coordsareequal(pointdata, nextnode.data) || coordsareequal(pointdata, prevnode.data)) 
+                if h.collinear
+                    belowupper = (coordsareequal(pointdata, nextnode.data) || coordsareequal(pointdata, prevnode.data))
                 else
                     belowupper = nextnode.data[2] >= prevnode.data[2] ? prevnode.data[2] <= pointdata[2] <= nextnode.data[2] :
-                                                                        prevnode.data[2] >= pointdata[2] >= nextnode.data[2]
+                        prevnode.data[2] >= pointdata[2] >= nextnode.data[2]
                 end
                 belowupper && return true # we can stop if we know the hull is within both the upper and lower hulls
-            # if the point is even with the previous node...
+                # if the point is even with the previous node...
             elseif pointdata[1] == prevnode.data[1]
                 belowupper = coordsareequal(pointdata, prevnode.data) || (h.collinear ? pointdata[2] < prevnode.data[2] : pointdata[2] <= prevnode.data[2])
-            # if the point is even with the next node...
+                # if the point is even with the next node...
             elseif pointdata[1] == nextnode.data[1]
                 belowupper = coordsareequal(pointdata, nextnode.data) || (h.collinear ? pointdata[2] < nextnode.data[2] : pointdata[2] <= nextnode.data[2])
-            # if the point is in between the previous and next nodes...
+                # if the point is in between the previous and next nodes...
             elseif ccw ? (prevnode.data[1] >= pointdata[1] >= nextnode.data[1]) : (prevnode.data[1] <= pointdata[1] <= nextnode.data[1])
                 yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
                 if h.collinear ? pointdata[2] < yhull : pointdata[2] <= yhull
@@ -93,7 +93,7 @@ function insidehull(pointdata::T, h::FullHull{T}) where T
     return abovelower && belowupper
 end
 
-function insidehull(pointdata::T, h::LowerHull{T}) where T
+function insidehull(pointdata::T, h::LowerHull{T}) where {T}
     length(h) == 0 && return false
     length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
     ccw = h.orientation === CCW
@@ -113,7 +113,7 @@ function insidehull(pointdata::T, h::LowerHull{T}) where T
             leftnode.data[1] != headdata[1] && break
             lastleftnode = leftnode
         end
-        if ccw 
+        if ccw
             return pointdata[2] >= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) >= h.sortedby(headdata)
         else
             return pointdata[2] >= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) <= h.sortedby(headdata)
@@ -121,12 +121,12 @@ function insidehull(pointdata::T, h::LowerHull{T}) where T
     end
     if pointdata[1] == taildata[1]
         firstrightnode = htail
-        for rightnode in ListNodeIterator(h.hull; rev=true)
+        for rightnode in ListNodeIterator(h.hull; rev = true)
             coordsareequal(rightnode.data, pointdata) && return true
             rightnode.data[1] != taildata[1] && break
             firstrightnode = rightnode
         end
-        if ccw 
+        if ccw
             return pointdata[2] >= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) <= h.sortedby(taildata)
         else
             return pointdata[2] >= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) >= h.sortedby(taildata)
@@ -147,7 +147,7 @@ function insidehull(pointdata::T, h::LowerHull{T}) where T
     return false
 end
 
-function insidehull(pointdata::T, h::UpperHull{T}) where T
+function insidehull(pointdata::T, h::UpperHull{T}) where {T}
     length(h) == 0 && return false
     length(h) == 1 && return coordsareequal(pointdata, h.hull.head.next.data)
     ccw = h.orientation == CCW
@@ -167,7 +167,7 @@ function insidehull(pointdata::T, h::UpperHull{T}) where T
             leftnode.data[1] != headdata[1] && break
             lastleftnode = leftnode
         end
-        if ccw 
+        if ccw
             return pointdata[2] <= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) <= h.sortedby(headdata)
         else
             return pointdata[2] <= lastleftnode.data[2] && (!h.collinear || lastleftnode === hhead) && h.sortedby(pointdata) >= h.sortedby(headdata)
@@ -175,12 +175,12 @@ function insidehull(pointdata::T, h::UpperHull{T}) where T
     end
     if pointdata[1] == taildata[1]
         firstrightnode = htail
-        for rightnode in ListNodeIterator(h.hull; rev=true)
+        for rightnode in ListNodeIterator(h.hull; rev = true)
             coordsareequal(rightnode.data, pointdata) && return true
             rightnode.data[1] != taildata[1] && break
             firstrightnode = rightnode
         end
-        if ccw 
+        if ccw
             return pointdata[2] <= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) >= h.sortedby(taildata)
         else
             return pointdata[2] <= firstrightnode.data[2] && (!h.collinear || firstrightnode === htail) && h.sortedby(pointdata) <= h.sortedby(taildata)

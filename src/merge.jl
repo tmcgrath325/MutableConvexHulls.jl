@@ -42,27 +42,27 @@ arguments must be the same concrete hull type (`MutableConvexHull`,
 subtypes are not accepted. See [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm)
 for a similar approach.
 """
-function mergehulls!(h::H, others::H...) where H<:Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull}
+function mergehulls!(h::H, others::H...) where {H <: Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull}}
     mergedhull = h.hull
     mergedpoints = h.points
-    
+
     # filter out empty hulls
-    hulls = filter(x->length(x.hull)>0,[h, others...])
+    hulls = filter(x -> length(x.hull) > 0, [h, others...])
     length(hulls) == 0 && return h
 
     targetscollinear = [hl.collinear for hl in hulls]
 
     # Set up copies of the hulls that point to the new points list
-    hulltargets = [TargetedLinkedList(mergedpoints) for i=1:length(hulls)]
+    hulltargets = [TargetedLinkedList(mergedpoints) for i in 1:length(hulls)]
 
-    for (originalhull,htarget) in zip(hulls,hulltargets)
+    for (originalhull, htarget) in zip(hulls, hulltargets)
         for hullnode in ListNodeIterator(originalhull.hull)
             push!(htarget, hullnode.data)
             tail(htarget).target = hullnode.target
         end
     end
 
-    # add points from all hulls into the points list. 
+    # add points from all hulls into the points list.
     for originalhull in hulls
         if originalhull !== h
             for pointnode in ListNodeIterator(originalhull.points)
@@ -88,7 +88,7 @@ Return a new hull of the same type as `hull` containing the points of `hull` and
 `otherhulls`, without mutating any argument. See [`mergehulls!`](@ref) for the
 in-place form.
 """
-mergehulls(h::H, others::H...) where H <: Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull} = mergehulls!(copy(h), others...)
+mergehulls(h::H, others::H...) where {H <: Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull}} = mergehulls!(copy(h), others...)
 
 function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)
     empty!(mergedhull) # start with an empty hull
@@ -106,11 +106,11 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
     # determine starting and stopping points for general case
     f = x -> sortedby(x.data)
     start = rev ? argmax(f, [head(x) for x in hulltargets]) :
-                argmin(f, [head(x) for x in hulltargets])
+        argmin(f, [head(x) for x in hulltargets])
     stop = start
     if partial
         stop = rev ? argmin(f, [tail(x) for x in hulltargets]) :
-                    argmax(f, [tail(x) for x in hulltargets])
+            argmax(f, [tail(x) for x in hulltargets])
     end
     stopdata = stop.data
 
@@ -123,7 +123,7 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
     maxlength <= 1 && return mergedhull
 
     # prepare orientation test
-    betterturn(prevedge,o,a,b) = collinear ? iscloserturn(!orientation,prevedge,o,a,b) : isfurtherturn(!orientation,prevedge,o,a,b)
+    betterturn(prevedge, o, a, b) = collinear ? iscloserturn(!orientation, prevedge, o, a, b) : isfurtherturn(!orientation, prevedge, o, a, b)
 
     # perform jarvis march with search that makes use of the sorted nature of the hulls
     counter = 0
@@ -188,11 +188,11 @@ end
 
 function fallback_merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)
     empty!(mergedhull)
-    all_points_nodes = sort(collect(Iterators.flatten([n.target for n in ListNodeIterator(h; rev=rev)] for h in hulltargets)); by=x->sortedby(x.data), rev=rev)
-    if !isempty(all_points_nodes)
+    all_points_nodes = sort(collect(Iterators.flatten([n.target for n in ListNodeIterator(h; rev = rev)] for h in hulltargets)); by = x -> sortedby(x.data), rev = rev)
+    return if !isempty(all_points_nodes)
         stop = first(all_points_nodes)
         if partial
-            stop = rev ? argmin(x->sortedby(x.data), all_points_nodes) : argmax(x->sortedby(x.data), all_points_nodes)
+            stop = rev ? argmin(x -> sortedby(x.data), all_points_nodes) : argmax(x -> sortedby(x.data), all_points_nodes)
         end
         push!(mergedhull, first(all_points_nodes).data)
         addtarget!(head(mergedhull), first(all_points_nodes))

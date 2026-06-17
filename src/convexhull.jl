@@ -9,18 +9,18 @@ Concrete subtypes: [`MutableConvexHull`](@ref), [`MutableLowerConvexHull`](@ref)
 """
 abstract type AbstractConvexHull{T} end
 
-mutable struct MutableConvexHull{T, F<:Function} <: AbstractConvexHull{T}
-    const hull::HullList{T,F}
-    const points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
+mutable struct MutableConvexHull{T, F <: Function} <: AbstractConvexHull{T}
+    const hull::HullList{T, F}
+    const points::PointList{T, HullList{T, F}, HullNode{T, HullList{T, F}, F}, F}
     const orientation::HullOrientation
     const collinear::Bool
     const sortedby::F
 end
-function MutableConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
-    points = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,F}()
-    addtarget!(hull,points)
-    return MutableConvexHull{T,F}(hull, points, orientation, collinear, sortedby)
+function MutableConvexHull{T, F}(; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::F = identity) where {T, F}
+    points = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, F}()
+    addtarget!(hull, points)
+    return MutableConvexHull{T, F}(hull, points, orientation, collinear, sortedby)
 end
 
 """
@@ -40,20 +40,20 @@ Initialize an empty hull with the provided attributes.
 
 See also: [monotonechain](@ref), [jarvismarch](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref)
 """
-MutableConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableConvexHull{T,F}(; orientation, collinear, sortedby)
+MutableConvexHull{T}(; orientation = CCW, collinear = false, sortedby::F = identity) where {T, F} = MutableConvexHull{T, F}(; orientation, collinear, sortedby)
 
-mutable struct MutableLowerConvexHull{T, F<:Function} <: AbstractConvexHull{T}
-    const hull::HullList{T,F}
-    const points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
+mutable struct MutableLowerConvexHull{T, F <: Function} <: AbstractConvexHull{T}
+    const hull::HullList{T, F}
+    const points::PointList{T, HullList{T, F}, HullNode{T, HullList{T, F}, F}, F}
     const orientation::HullOrientation
     const collinear::Bool
     const sortedby::F
 end
-function MutableLowerConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
-    points = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,F}()
-    addtarget!(hull,points)
-    return MutableLowerConvexHull{T,F}(hull, points, orientation, collinear, sortedby)
+function MutableLowerConvexHull{T, F}(; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::F = identity) where {T, F}
+    points = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, F}()
+    addtarget!(hull, points)
+    return MutableLowerConvexHull{T, F}(hull, points, orientation, collinear, sortedby)
 end
 
 """
@@ -73,20 +73,20 @@ Initialize an empty hull with the provided attributes.
 
 See also: [lower_monotonechain](@ref), [lower_jarvismarch](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref)
 """
-MutableLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableLowerConvexHull{T,F}(; orientation, collinear, sortedby)
+MutableLowerConvexHull{T}(; orientation = CCW, collinear = false, sortedby::F = identity) where {T, F} = MutableLowerConvexHull{T, F}(; orientation, collinear, sortedby)
 
-mutable struct MutableUpperConvexHull{T, F<:Function} <: AbstractConvexHull{T}
-    const hull::HullList{T,F}
-    const points::PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}
+mutable struct MutableUpperConvexHull{T, F <: Function} <: AbstractConvexHull{T}
+    const hull::HullList{T, F}
+    const points::PointList{T, HullList{T, F}, HullNode{T, HullList{T, F}, F}, F}
     const orientation::HullOrientation
     const collinear::Bool
     const sortedby::F
 end
-function MutableUpperConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
-    points = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,F}()
-    addtarget!(hull,points)
-    return MutableUpperConvexHull{T,F}(hull, points, orientation, collinear, sortedby)
+function MutableUpperConvexHull{T, F}(; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::F = identity) where {T, F}
+    points = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, F}()
+    addtarget!(hull, points)
+    return MutableUpperConvexHull{T, F}(hull, points, orientation, collinear, sortedby)
 end
 
 """
@@ -106,7 +106,7 @@ Initialize an empty hull with the provided attributes.
 
 See also: [upper_monotonechain](@ref), [upper_jarvismarch](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref)
 """
-MutableUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableUpperConvexHull{T,F}(; orientation, collinear, sortedby)
+MutableUpperConvexHull{T}(; orientation = CCW, collinear = false, sortedby::F = identity) where {T, F} = MutableUpperConvexHull{T, F}(; orientation, collinear, sortedby)
 
 Base.isempty(h::AbstractConvexHull) = isempty(h.hull)
 Base.length(h::AbstractConvexHull) = length(h.hull)
@@ -125,12 +125,12 @@ function Base.hash(h::AbstractConvexHull, x::UInt)
 end
 
 Base.empty!(h::AbstractConvexHull) = empty!(h.hull)
-Base.empty(h::H) where H <: AbstractConvexHull = H(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+Base.empty(h::H) where {H <: AbstractConvexHull} = H(; orientation = h.orientation, collinear = h.collinear, sortedby = h.sortedby)
 
 # Deep copy by replaying the contained points: the result shares no linked-list
 # nodes with `h`, so mutating one hull never affects the other.
-function Base.copy(h::H) where {H<:AbstractConvexHull}
-    hcopy = H(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+function Base.copy(h::H) where {H <: AbstractConvexHull}
+    hcopy = H(; orientation = h.orientation, collinear = h.collinear, sortedby = h.sortedby)
     for node in PointNodeIterator(h)
         addpoint!(hcopy, node.data)
     end
@@ -141,7 +141,7 @@ end
 Base.iterate(h::AbstractConvexHull) = iterate(h, h.hull.head.next)
 Base.iterate(h::AbstractConvexHull, node::HullNode) = iterate(h.hull, node)
 
-struct HullNodeIterator{S<:HullNode}
+struct HullNodeIterator{S <: HullNode}
     start::S
     rev::Bool
 end
@@ -154,7 +154,7 @@ list, starting at `start`.
 If `rev` is `true`, the iterator advances toward the head of the list.
 Otherwise, it advances toward the tail.
 """
-function HullNodeIterator(start::S; rev::Bool = false) where {S<:HullNode}
+function HullNodeIterator(start::S; rev::Bool = false) where {S <: HullNode}
     return HullNodeIterator{S}(start, rev)
 end
 
@@ -169,14 +169,14 @@ Otherwise, it starts at the head and advances toward the tail.
 HullNodeIterator(h::AbstractConvexHull; rev::Bool = false) = HullNodeIterator{nodetype(h.hull)}(rev ? h.hull.tail.prev : h.hull.head.next, rev)
 
 Base.iterate(iter::HullNodeIterator) = iterate(iter, iter.start)
-Base.iterate(iter::HullNodeIterator{S}, node::S) where {S<:HullNode} = iter.rev ? (athead(node) ? nothing : (node, node.prev)) :
-                                                                                  (attail(node) ? nothing : (node, node.next))
+Base.iterate(iter::HullNodeIterator{S}, node::S) where {S <: HullNode} = iter.rev ? (athead(node) ? nothing : (node, node.prev)) :
+    (attail(node) ? nothing : (node, node.next))
 Base.IteratorSize(::HullNodeIterator) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<:HullNodeIterator}) = Base.HasEltype()
-Base.eltype(::Type{<:HullNodeIterator{S}}) where {S<:HullNode} = S
+Base.eltype(::Type{<:HullNodeIterator{S}}) where {S <: HullNode} = S
 
 
-struct PointNodeIterator{S<:PointNode}
+struct PointNodeIterator{S <: PointNode}
     start::S
     rev::Bool
 end
@@ -189,7 +189,7 @@ starting at `start`.
 If `rev` is `true`, the iterator advances toward the head of the list.
 Otherwise, it advances toward the tail.
 """
-function PointNodeIterator(start::S; rev::Bool = false) where S
+function PointNodeIterator(start::S; rev::Bool = false) where {S}
     return PointNodeIterator{S}(start, rev)
 end
 
@@ -204,11 +204,11 @@ Otherwise, it starts at the head and advances toward the tail.
 PointNodeIterator(h::AbstractConvexHull; rev::Bool = false) = PointNodeIterator{nodetype(h.points)}(rev ? h.points.tail.prev : h.points.head.next, rev)
 
 Base.iterate(iter::PointNodeIterator) = iterate(iter, iter.start)
-Base.iterate(iter::PointNodeIterator{S}, node::S) where S = iter.rev ? (athead(node) ? nothing : (node, node.prev)) :
-                                                                       (attail(node) ? nothing : (node, node.next))
+Base.iterate(iter::PointNodeIterator{S}, node::S) where {S} = iter.rev ? (athead(node) ? nothing : (node, node.prev)) :
+    (attail(node) ? nothing : (node, node.next))
 Base.IteratorSize(::PointNodeIterator) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<:PointNodeIterator}) = Base.HasEltype()
-Base.eltype(::Type{<:PointNodeIterator{S}}) where {S<:PointNode} = S
+Base.eltype(::Type{<:PointNodeIterator{S}}) where {S <: PointNode} = S
 
 """
     addpoint!(hull, point)
@@ -238,7 +238,7 @@ false
 
 See also: [mergepoints!](@ref), [removepoint!](@ref)
 """
-function addpoint!(h::AbstractConvexHull{T}, point::T) where T
+function addpoint!(h::AbstractConvexHull{T}, point::T) where {T}
     # handle the case when the hull is initially empty
     if length(h) == 0
         push!(h.hull, point)
@@ -269,19 +269,19 @@ Return `hull`.
 
 See also: [addpoint!](@ref), [removepoint!](@ref)
 """
-function mergepoints!(h::MutableConvexHull{T}, points::AbstractVector{T}) where T
-    h2 = monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
-    mergehulls!(h,h2)
+function mergepoints!(h::MutableConvexHull{T}, points::AbstractVector{T}) where {T}
+    h2 = monotonechain(points; orientation = h.orientation, collinear = h.collinear, sortedby = h.sortedby)
+    mergehulls!(h, h2)
     return h
 end
-function mergepoints!(h::MutableLowerConvexHull{T}, points::AbstractVector{T}) where T
-    h2 = lower_monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
-    mergehulls!(h,h2)
+function mergepoints!(h::MutableLowerConvexHull{T}, points::AbstractVector{T}) where {T}
+    h2 = lower_monotonechain(points; orientation = h.orientation, collinear = h.collinear, sortedby = h.sortedby)
+    mergehulls!(h, h2)
     return h
 end
-function mergepoints!(h::MutableUpperConvexHull{T}, points::AbstractVector{T}) where T
-    h2 = upper_monotonechain(points; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
-    mergehulls!(h,h2)
+function mergepoints!(h::MutableUpperConvexHull{T}, points::AbstractVector{T}) where {T}
+    h2 = upper_monotonechain(points; orientation = h.orientation, collinear = h.collinear, sortedby = h.sortedby)
+    mergehulls!(h, h2)
     return h
 end
 mergepoints!(h::AbstractConvexHull, points::AbstractMatrix) = mergepoints!(h, rowpoints(points))
@@ -298,12 +298,12 @@ removed and `false` if an interior or duplicate point was removed.
 
 See also: [addpoint!](@ref), [mergepoints!](@ref)
 """
-function removepoint!(h::AbstractConvexHull{T}, node::HullNode{T}) where T
+function removepoint!(h::AbstractConvexHull{T}, node::HullNode{T}) where {T}
     updatedhull = removepoint!(h, node.target)[2]
     return h, updatedhull
 end
 
-function removepoint!(h::Union{MutableLowerConvexHull{T}, MutableUpperConvexHull{T}}, node::PointNode{T}) where T
+function removepoint!(h::Union{MutableLowerConvexHull{T}, MutableUpperConvexHull{T}}, node::PointNode{T}) where {T}
     node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
     if hastarget(node)
         # handle cases with duplicate data
@@ -338,7 +338,7 @@ function removepoint!(h::Union{MutableLowerConvexHull{T}, MutableUpperConvexHull
     end
 end
 
-function removepoint!(h::MutableConvexHull{T}, node::PointNode{T}) where T
+function removepoint!(h::MutableConvexHull{T}, node::PointNode{T}) where {T}
     node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
     if hastarget(node)
         # handle cases with duplicate data
@@ -372,7 +372,7 @@ end
 # `search` lands on the last node whose sort key is ≤ that of `value`; scanning
 # back across the equal-key run and comparing full coordinates handles a
 # `sortedby` that maps distinct points to the same key.
-function findpointnode(points::PointList{T}, value::T) where T
+function findpointnode(points::PointList{T}, value::T) where {T}
     node = search(points, value)
     svalue = points.sortedby(value)
     while !athead(node) && points.sortedby(node.data) == svalue
@@ -412,7 +412,7 @@ MutableConvexHull{Tuple{Float64, Float64}, typeof(identity)}((0.0, 0.0), (0.0, 1
 
 See also: [addpoint!](@ref), [mergepoints!](@ref)
 """
-function removepoint!(h::AbstractConvexHull{T}, value::T) where T
+function removepoint!(h::AbstractConvexHull{T}, value::T) where {T}
     node = findpointnode(h.points, value)
     node === nothing && throw(ArgumentError("No point equal to $value is contained in the convex hull"))
     return removepoint!(h, node)
@@ -421,5 +421,5 @@ end
 function Base.show(io::IO, h::AbstractConvexHull)
     print(io, typeof(h), '(')
     join(io, h, ", ")
-    print(io, ')')
+    return print(io, ')')
 end
