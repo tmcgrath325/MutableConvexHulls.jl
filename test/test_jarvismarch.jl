@@ -44,7 +44,7 @@
         uppercollinear = upper_jarvismarch(boxcoords; collinear = true)
         uppercollinearCW = upper_jarvismarch(boxcoords; orientation=CW, collinear=true)
         @test collect(uppercollinear.hull) == [[(i,last(jrange)) for i in reverse(irange)]..., [(first(irange), j) for j in reverse(jrange)[2:end]]...]
-        @test collect(uppercollinearCW) == reverse(collect(uppercollinear.hull))
+        @test collect(uppercollinearCW.hull) == reverse(collect(uppercollinear.hull))
         for u in [upper, upperCW, uppercollinear, uppercollinearCW]
             @test collect(u.hull) == collect(MCH.jarvismarch!(u).hull)
         end

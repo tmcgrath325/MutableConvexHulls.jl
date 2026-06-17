@@ -17,7 +17,7 @@ function inittest(by, coords, hullfun)
         hull = HullList{eltype(coords)}(;sortedby=by)
         points = PointList{eltype(coords)}(;sortedby=by)
         addtarget!(hull, points)
-        h2 = hullfun{eltype(coords), typeof(by)}(hull, points, CW, true, by)
+        @test hullfun{eltype(coords), typeof(by)}(hull, points, CW, true, by) isa hullfun
     end
 end
 
@@ -123,13 +123,7 @@ function fallbackmergetest(n, by, coords, hullfun, truthfun)
             for scoords in splitcoords
                 append!(mergedcoords, scoords)
                 for h in hulls
-                    npoints = sum(length, h.subhulls)
-                    while npoints > 3 && length(h.subhulls)^2 < npoints
-                        push!(h.subhulls, eltype(h.subhulls)(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby))
-                        if (h.subhulls[1].points.cache !== nothing)
-                            h.subhulls[end].points.cache = PairedLinkedLists.SkipListCache{T}()
-                        end
-                    end
+                    MutableConvexHulls.growsubhulls!(h)
                     smallhull = argmin(x->length(x.points),h.subhulls)
                     mergepoints!(smallhull, scoords)
                     MutableConvexHulls.fallback_merge_hull_lists!(h)
