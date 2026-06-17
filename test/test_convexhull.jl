@@ -93,6 +93,29 @@ end
     end
 end
 
+@testset "constructor keyword API" begin
+    # All configuration arguments are keyword-only; positional calls now throw.
+    T = Tuple{Float64,Float64}
+    by = x -> x[1]
+    for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+        # Defaults
+        h = H{T}()
+        @test h.orientation === CCW && h.collinear === false && h.sortedby === identity
+        # All keywords explicit
+        h2 = H{T}(; orientation=CW, collinear=true, sortedby=by)
+        @test h2.orientation === CW && h2.collinear === true && h2.sortedby === by
+        # Positional call now throws
+        @test_throws MethodError H{T}(CCW, false, identity)
+    end
+    for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
+        h = H{T}()
+        @test h.orientation === CCW && h.collinear === false && h.sortedby === identity
+        h2 = H{T}(; orientation=CW, collinear=true, sortedby=by)
+        @test h2.orientation === CW && h2.collinear === true && h2.sortedby === by
+        @test_throws MethodError H{T}(CCW, false, identity)
+    end
+end
+
 @testset "removepoint! by value" begin
     boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     coords = [boxcoords..., boxcoords...]   # include duplicate points
@@ -186,7 +209,7 @@ end
     coords = [(i, j) for i in 1:5 for j in 1:5]
     for collinear in (false, true)
         @testset "collinear=$collinear" begin
-            h = MutableConvexHull{eltype(coords)}(CCW, collinear)
+            h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear)
             mergepoints!(h, coords)
             # Strictly interior and exterior points are unaffected by the collinear flag.
             @test insidehull((3, 3), h) == true
@@ -207,7 +230,7 @@ end
                           (MutableLowerConvexHull,  lower_jarvismarch),
                           (MutableUpperConvexHull,  upper_jarvismarch))
         @testset "$H" begin
-            h = H{eltype(pts), typeof(sb)}(CCW, false, sb)
+            h = H{eltype(pts), typeof(sb)}(; orientation=CCW, collinear=false, sortedby=sb)
             for p in pts
                 addpoint!(h, p)
             end

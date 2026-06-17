@@ -7,7 +7,7 @@ mutable struct MutableConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     const collinear::Bool
     const sortedby::F
 end
-function MutableConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
+function MutableConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
     points = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,F}()
     addtarget!(hull,points)
@@ -15,7 +15,7 @@ function MutableConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Boo
 end
 
 """
-    h = MutableConvexHull{T}([, orientation, collinear, sortedby])
+    h = MutableConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
 
 Initialize an empty `MutableConvexHull` with the provided attributes.
 
@@ -27,7 +27,7 @@ Initialize an empty `MutableConvexHull` with the provided attributes.
 
 See also: [monotonechain](@ref), [jarvismarch](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref)
 """
-MutableConvexHull{T}(orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableConvexHull{T,F}(orientation,collinear,sortedby)
+MutableConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableConvexHull{T,F}(; orientation, collinear, sortedby)
 
 mutable struct MutableLowerConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     const hull::HullList{T,F}
@@ -36,7 +36,7 @@ mutable struct MutableLowerConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     const collinear::Bool
     const sortedby::F
 end
-function MutableLowerConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
+function MutableLowerConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
     points = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,F}()
     addtarget!(hull,points)
@@ -44,7 +44,7 @@ function MutableLowerConvexHull{T,F}(orientation::HullOrientation=CCW, collinear
 end
 
 """
-    h = MutableLowerConvexHull{T}([, orientation, collinear, sortedby])
+    h = MutableLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
 
 Initialize an empty `MutableLowerConvexHull` with the provided attributes.
 
@@ -56,7 +56,7 @@ Initialize an empty `MutableLowerConvexHull` with the provided attributes.
 
 See also: [lower_monotonechain](@ref), [lower_jarvismarch](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref)
 """
-MutableLowerConvexHull{T}(orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableLowerConvexHull{T,F}(orientation,collinear,sortedby)
+MutableLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableLowerConvexHull{T,F}(; orientation, collinear, sortedby)
 
 mutable struct MutableUpperConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     const hull::HullList{T,F}
@@ -65,7 +65,7 @@ mutable struct MutableUpperConvexHull{T, F<:Function} <: AbstractConvexHull{T}
     const collinear::Bool
     const sortedby::F
 end
-function MutableUpperConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
+function MutableUpperConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
     points = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,F}()
     addtarget!(hull,points)
@@ -73,7 +73,7 @@ function MutableUpperConvexHull{T,F}(orientation::HullOrientation=CCW, collinear
 end
 
 """
-    h = MutableUpperConvexHull{T}([, orientation, collinear, sortedby])
+    h = MutableUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
 
 Initialize an empty `MutableUpperConvexHull` with the provided attributes.
 
@@ -85,7 +85,7 @@ Initialize an empty `MutableUpperConvexHull` with the provided attributes.
 
 See also: [upper_monotonechain](@ref), [upper_jarvismarch](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref)
 """
-MutableUpperConvexHull{T}(orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableUpperConvexHull{T,F}(orientation,collinear, sortedby)
+MutableUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = MutableUpperConvexHull{T,F}(; orientation, collinear, sortedby)
 
 Base.isempty(h::AbstractConvexHull) = isempty(h.hull)
 Base.length(h::AbstractConvexHull) = length(h.hull)
@@ -104,12 +104,12 @@ function Base.hash(h::AbstractConvexHull, x::UInt)
 end
 
 Base.empty!(h::AbstractConvexHull) = empty!(h.hull)
-Base.empty(h::H) where H <: AbstractConvexHull = H(h.orientation, h.collinear, h.sortedby)
+Base.empty(h::H) where H <: AbstractConvexHull = H(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
 
 # Deep copy by replaying the contained points: the result shares no linked-list
 # nodes with `h`, so mutating one hull never affects the other.
 function Base.copy(h::H) where {H<:AbstractConvexHull}
-    hcopy = H(h.orientation, h.collinear, h.sortedby)
+    hcopy = H(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
     for node in PointNodeIterator(h)
         addpoint!(hcopy, node.data)
     end

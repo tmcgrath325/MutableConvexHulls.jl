@@ -38,7 +38,7 @@ function addtests(n, by, coords, hullfun, truthfun)
     @testset "add points" begin
         for j=1:n
             shuffledcoords = shuffle(coords)
-            hulls = [hullfun{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
+            hulls = [hullfun{eltype(shuffledcoords)}(; orientation=o, collinear=c, sortedby=f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
             for (i, coord) in enumerate(shuffledcoords)
                 for h in hulls
                     addpoint!(h, coord)
@@ -56,7 +56,7 @@ function mergetests(n, by, coords, hullfun, truthfun)
             mergesize = Int(ceil((sqrt(length(coords))/10)))
             nummerges = Int(length(coords)/mergesize) # have to choose a size of the coords that is divisible by 10
             splitcoords = [shuffledcoords[mergesize*(i-1)+1:mergesize*i] for i=1:nummerges]
-            hulls = [hullfun{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
+            hulls = [hullfun{eltype(shuffledcoords)}(; orientation=o, collinear=c, sortedby=f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
             mergedcoords = eltype(coords)[]
             for scoords in splitcoords
                 append!(mergedcoords, scoords)
@@ -73,7 +73,7 @@ function removetests(n, by, coords, hullfun, truthfun)
     @testset "remove points" begin
         for j=1:n
             shuffledcoords = shuffle(coords)
-            hulls = [hullfun{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
+            hulls = [hullfun{eltype(shuffledcoords)}(; orientation=o, collinear=c, sortedby=f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
             for h in hulls
                 mergepoints!(h, shuffledcoords)
             end
@@ -118,14 +118,14 @@ function fallbackmergetest(n, by, coords, hullfun, truthfun)
             mergesize = Int(ceil((sqrt(length(coords))/10)))
             nummerges = Int(length(coords)/mergesize) # have to choose a size of the coords that is divisible by 10
             splitcoords = [shuffledcoords[mergesize*(i-1)+1:mergesize*i] for i=1:nummerges]
-            hulls = [hullfun{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
+            hulls = [hullfun{eltype(shuffledcoords)}(; orientation=o, collinear=c, sortedby=f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
             mergedcoords = eltype(coords)[]
             for scoords in splitcoords
                 append!(mergedcoords, scoords)
                 for h in hulls
                     npoints = sum(length, h.subhulls)
                     while npoints > 3 && length(h.subhulls)^2 < npoints
-                        push!(h.subhulls, eltype(h.subhulls)(h.orientation, h.collinear, h.sortedby))
+                        push!(h.subhulls, eltype(h.subhulls)(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby))
                         if (h.subhulls[1].points.cache !== nothing)
                             h.subhulls[end].points.cache = PairedLinkedLists.SkipListCache{T}()
                         end
@@ -144,7 +144,7 @@ function chanremovetests(n, by, coords, hullfun, truthfun)
     @testset "remove point" begin
         for j=1:n
             shuffledcoords = shuffle(coords)
-            hulls = [hullfun{eltype(shuffledcoords)}(o, c, f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
+            hulls = [hullfun{eltype(shuffledcoords)}(; orientation=o, collinear=c, sortedby=f) for o in [CCW,CW] for c in [false,true] for f in [identity, by]]
             for h in hulls
                 mergesize = Int(ceil((sqrt(length(shuffledcoords))/10)))
                 nummerges = Int(length(shuffledcoords)/mergesize) # have to choose a size of the coords that is divisible by 10

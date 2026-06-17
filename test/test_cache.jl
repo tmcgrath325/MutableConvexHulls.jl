@@ -5,7 +5,7 @@ using MutableConvexHulls: ChanHullCache, chanhullsidentical
 function build_random_hull(H::Type{<:AbstractConvexHull}, n::Int=1024, m::Int=4; subhullcaches=true, orientation=CCW, collinear::Bool=false, sortedby=identity)
     coords = [(rand(), randn()) for i=1:n]
 
-    h = H{eltype(coords)}(orientation, collinear, sortedby)
+    h = H{eltype(coords)}(; orientation, collinear, sortedby)
     h.cache = ChanHullCache{eltype(coords)}()
     if subhullcaches
         h.subhulls[1].points.cache = SkipListCache{eltype(coords)}()
