@@ -176,7 +176,7 @@ function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    !isempty(points) && push!(pointslist, points...)
+    for p in points; push!(pointslist, p); end
     h = MutableConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
@@ -200,7 +200,7 @@ function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientati
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    !isempty(points) && push!(pointslist, points...)
+    for p in points; push!(pointslist, p); end
     h = MutableLowerConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
@@ -224,7 +224,7 @@ function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientati
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    !isempty(points) && push!(pointslist, points...)
+    for p in points; push!(pointslist, p); end
     h = MutableUpperConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
