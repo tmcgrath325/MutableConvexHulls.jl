@@ -2,7 +2,7 @@
 
 julia_version = "1.12.4"
 manifest_format = "2.0"
-project_hash = "48fa0448bf5b5e1f5aa13df9130e83c9a3c2b2fe"
+project_hash = "54b76d693a1df9c7e7d727ed5727bab8b73e10f7"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -149,7 +149,7 @@ version = "1.11.0"
 
 [[deps.MutableConvexHulls]]
 deps = ["DoubleFloats", "PairedLinkedLists"]
-path = ".."
+path = "/home/tom/Projects/Julia/MutableConvexHulls.jl"
 uuid = "948c7aac-0e5e-4631-af23-7a6bb7a17825"
 version = "0.4.0"
 
@@ -179,7 +179,7 @@ uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
 version = "0.5.6+0"
 
 [[deps.PairedLinkedLists]]
-path = "../../PairedLinkedLists.jl"
+git-tree-sha1 = "8e79470c4c4512d2756466d946b6987669f82cf0"
 uuid = "7a42b37b-ed3b-477a-9848-3661f53bb718"
 version = "0.3.0"
 
