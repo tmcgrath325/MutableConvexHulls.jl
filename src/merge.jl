@@ -36,9 +36,10 @@
 """
     mergehulls!(hull, otherhulls...)
 
-Merge the points contained in `otherhulls` into `hull`. All arguments must be
-the same concrete hull type (`MutableConvexHull`, `MutableLowerConvexHull`, or
-`MutableUpperConvexHull`). See [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm)
+Merge the points contained in `otherhulls` into `hull` and return `hull`. All
+arguments must be the same concrete hull type (`MutableConvexHull`,
+`MutableLowerConvexHull`, or `MutableUpperConvexHull`); [`AbstractChanConvexHull`](@ref)
+subtypes are not accepted. See [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm)
 for a similar approach.
 """
 function mergehulls!(h::H, others::H...) where H<:Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull}
@@ -83,8 +84,9 @@ end
 """
     mergehulls(hull, otherhulls...)
 
-Return a new convex hull containing the points of `hull` and `otherhulls`,
-without mutating any argument. See [`mergehulls!`](@ref) for the in-place form.
+Return a new hull of the same type as `hull` containing the points of `hull` and
+`otherhulls`, without mutating any argument. See [`mergehulls!`](@ref) for the
+in-place form.
 """
 mergehulls(h::H, others::H...) where H <: Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull} = mergehulls!(copy(h), others...)
 

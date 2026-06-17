@@ -17,7 +17,11 @@ end
 """
     h = MutableConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
 
-Initialize an empty `MutableConvexHull` with the provided attributes.
+A mutable convex hull over 2-D points of type `T` (e.g., `Tuple{Float64,Float64}`),
+supporting incremental addition and removal of points. Iterating `h` yields the
+hull-vertex sequence in the specified orientation.
+
+Initialize an empty hull with the provided attributes.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -46,7 +50,11 @@ end
 """
     h = MutableLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
 
-Initialize an empty `MutableLowerConvexHull` with the provided attributes.
+A mutable lower convex hull over 2-D points of type `T` (e.g., `Tuple{Float64,Float64}`):
+the chain of hull vertices from the leftmost to the rightmost point along the bottom boundary.
+Supports the same incremental operations as [`MutableConvexHull`](@ref).
+
+Initialize an empty hull with the provided attributes.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -75,7 +83,11 @@ end
 """
     h = MutableUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
 
-Initialize an empty `MutableUpperConvexHull` with the provided attributes.
+A mutable upper convex hull over 2-D points of type `T` (e.g., `Tuple{Float64,Float64}`):
+the chain of hull vertices from the leftmost to the rightmost point along the top boundary.
+Supports the same incremental operations as [`MutableConvexHull`](@ref).
+
+Initialize an empty hull with the provided attributes.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -127,10 +139,11 @@ end
 """
     HullNodeIterator(start[; rev=false])
 
-Returns an iterator over the nodes in the linked list representing the convex hull, starting at the specified node `start`.
+Return an iterator over the [`HullNode`](@ref) elements in the convex hull's linked
+list, starting at `start`.
 
-If `rev` is `true`, the iterator will advance toward the head of the list.
-Otherwise, it will advance toward the tail of the list.
+If `rev` is `true`, the iterator advances toward the head of the list.
+Otherwise, it advances toward the tail.
 """
 function HullNodeIterator(start::S; rev::Bool = false) where {S<:HullNode}
     return HullNodeIterator{S}(start, rev)
@@ -139,10 +152,10 @@ end
 """
     HullNodeIterator(hull[; rev=false])
 
-Returns an iterator over the nodes in the linked list representing the convex hull.
+Return an iterator over the [`HullNode`](@ref) elements in the convex hull's linked list.
 
-If `rev` is `true`, the iterator will start at the tail of the list and advance toward the head.
-Otherwise, it will start at the head of the list and advance toward the tail.
+If `rev` is `true`, iteration starts at the tail and advances toward the head.
+Otherwise, it starts at the head and advances toward the tail.
 """
 HullNodeIterator(h::AbstractConvexHull; rev::Bool = false) = HullNodeIterator{nodetype(h.hull)}(rev ? h.hull.tail.prev : h.hull.head.next, rev)
 
@@ -161,11 +174,11 @@ end
 """
     PointNodeIterator(start[; rev=false])
 
-Returns an iterator over the nodes in the linked list representing the points contained by the convex hull,
-starting at the specified node `start`.
+Return an iterator over the [`PointNode`](@ref) elements in the hull's point list,
+starting at `start`.
 
-If `rev` is `true`, the iterator will advance toward the head of the list.
-Otherwise, it will advance toward the tail of the list.
+If `rev` is `true`, the iterator advances toward the head of the list.
+Otherwise, it advances toward the tail.
 """
 function PointNodeIterator(start::S; rev::Bool = false) where S
     return PointNodeIterator{S}(start, rev)
@@ -174,10 +187,10 @@ end
 """
     PointNodeIterator(hull[; rev=false])
 
-Returns an iterator over the nodes in the linked list representing the points contained by the convex hull.
+Return an iterator over the [`PointNode`](@ref) elements in the hull's point list.
 
-If `rev` is `true`, the iterator will start at the tail of the list and advance toward the head.
-Otherwise, it will start at the head of the list and advance toward the tail.
+If `rev` is `true`, iteration starts at the tail and advances toward the head.
+Otherwise, it starts at the head and advances toward the tail.
 """
 PointNodeIterator(h::AbstractConvexHull; rev::Bool = false) = PointNodeIterator{nodetype(h.points)}(rev ? h.points.tail.prev : h.points.head.next, rev)
 
@@ -194,7 +207,25 @@ Base.eltype(::Type{<:PointNodeIterator{S}}) where {S<:PointNode} = S
 Add `point` to the list of points contained by the provided convex hull `hull`. If `point` lies outside the convex hull,
 the list of hull points will be updated accordingly.
 
-Returns a tuple containing the hull and a boolean, which is true if the added point expands the convex hull and is false otherwise.
+Return `(hull, expanded)` where `expanded` is `true` if the added point expands the hull
+and `false` if it lies inside or on the boundary.
+
+# Examples
+```jldoctest
+julia> h = MutableConvexHull{Tuple{Float64,Float64}}();
+
+julia> h, _ = addpoint!(h, (0.0, 0.0)); h, _ = addpoint!(h, (1.0, 0.0));
+
+julia> h, expanded = addpoint!(h, (0.0, 1.0));
+
+julia> expanded
+true
+
+julia> h, expanded = addpoint!(h, (0.25, 0.25));
+
+julia> expanded
+false
+```
 
 See also: [mergepoints!](@ref), [removepoint!](@ref)
 """
@@ -222,8 +253,10 @@ the list of hull points will be updated accordingly.
 
 `points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
-This function finds the convex hull of the `points` to be added before merging them with the `hull`. See 
+This function finds the convex hull of the `points` to be added before merging them with the `hull`. See
 [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm) for a similar idea.
+
+Return `hull`.
 
 See also: [addpoint!](@ref), [removepoint!](@ref)
 """
@@ -247,10 +280,12 @@ mergepoints!(h::AbstractConvexHull, points::AbstractMatrix) = mergepoints!(h, ro
 """
     removepoint!(hull, node)
 
-Removes `node` from `hull`. If the `node` corresponds to a point on the convex hull, the list of hull points will be updated accordingly.
+Remove `node` from `hull`. `node` may be a [`HullNode`](@ref) (a vertex on the hull
+boundary) or a [`PointNode`](@ref) (any tracked point, inside or on the boundary). If
+removing `node` alters the hull boundary, it is recomputed.
 
-Returns a tuple containing the hull and a boolean, which is true if a point on the convex hull was removed and is false if an interior
-or duplicate point was removed.
+Return `(hull, removed)` where `removed` is `true` if a hull-boundary vertex was
+removed and `false` if an interior or duplicate point was removed.
 
 See also: [addpoint!](@ref), [mergepoints!](@ref)
 """
@@ -341,9 +376,30 @@ end
 """
     removepoint!(hull, value)
 
-Locate the point equal to `value` contained in `hull` and remove it, delegating
-to [`removepoint!`](@ref)`(hull, node)`. Throws an `ArgumentError` if no point
+Locate the point equal to `value` in `hull` and remove it, delegating to
+[`removepoint!`](@ref)`(hull, node)`. Throws an `ArgumentError` if no point
 equal to `value` is contained in `hull`.
+
+Return `(hull, removed)` where `removed` is `true` if a hull-boundary vertex
+was removed and `false` if an interior or duplicate point was removed.
+
+# Examples
+```jldoctest
+julia> h = monotonechain([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (0.25, 0.25)]);
+
+julia> h, removed = removepoint!(h, (0.25, 0.25));
+
+julia> removed  # interior point; hull boundary unchanged
+false
+
+julia> h, removed = removepoint!(h, (1.0, 0.0));
+
+julia> removed  # hull vertex; boundary recomputed
+true
+
+julia> h
+MutableConvexHull{Tuple{Float64, Float64}, typeof(identity)}((0.0, 0.0), (0.0, 1.0))
+```
 
 See also: [addpoint!](@ref), [mergepoints!](@ref)
 """

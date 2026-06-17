@@ -2,7 +2,7 @@
 MutableConvexHulls.jl provides ways to calculate and update vertex representations of planar [convex polytopes](https://en.wikipedia.org/wiki/Convex_polytope) 
 (i.e. convex hulls). It is intended for use in situations when a convex hull must be updated iteratively with addition or removal of points.
 
-See also [MutableConvexHull](@ref), [LowerMutableConvexHull](@ref), [UpperMutableConvexHull](@ref), [monotonechain](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref), 
+See also [MutableConvexHull](@ref), [MutableLowerConvexHull](@ref), [MutableUpperConvexHull](@ref), [monotonechain](@ref), [addpoint!](@ref), [mergepoints!](@ref), [removepoint!](@ref)
 """
 module MutableConvexHulls
 

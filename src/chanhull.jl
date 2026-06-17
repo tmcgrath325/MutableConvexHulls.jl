@@ -1,3 +1,14 @@
+"""
+    AbstractChanConvexHull{T}
+
+Abstract supertype for convex hulls that distribute their points across multiple
+[`MutableConvexHull`](@ref)-style sub-hulls and merge the results.
+
+Concrete subtypes are [`ChanConvexHull`](@ref), [`ChanLowerConvexHull`](@ref), and
+[`ChanUpperConvexHull`](@ref). They support the same incremental operations as their
+`Mutable*` counterparts (`addpoint!`, `mergepoints!`, `removepoint!`, `insidehull`)
+but do not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+"""
 abstract type AbstractChanConvexHull{T} <: AbstractConvexHull{T} end
 
 # for debugging
@@ -56,6 +67,15 @@ function ChanConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool
     hull = TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}()
     return ChanConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby)
 end
+"""
+    h = ChanConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
+
+A full convex hull that distributes its points across multiple [`MutableConvexHull`](@ref)
+sub-hulls and merges them on demand. Supports the same keyword arguments and incremental
+operations as [`MutableConvexHull`](@ref), but does not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+
+See also: [`ChanLowerConvexHull`](@ref), [`ChanUpperConvexHull`](@ref), [`addpoint!`](@ref), [`mergepoints!`](@ref), [`removepoint!`](@ref)
+"""
 ChanConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = ChanConvexHull{T,F}(; orientation, collinear, sortedby)
 
 mutable struct ChanLowerConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
@@ -74,6 +94,16 @@ function ChanLowerConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear:
     hull = TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}()
     return ChanLowerConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby)
 end
+"""
+    h = ChanLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
+
+A lower convex hull that distributes its points across multiple [`MutableLowerConvexHull`](@ref)
+sub-hulls and merges them on demand. The lower hull spans from the leftmost to the rightmost
+point along the bottom boundary. Supports the same keyword arguments and incremental operations
+as [`MutableLowerConvexHull`](@ref), but does not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+
+See also: [`ChanConvexHull`](@ref), [`ChanUpperConvexHull`](@ref), [`addpoint!`](@ref), [`mergepoints!`](@ref), [`removepoint!`](@ref)
+"""
 ChanLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = ChanLowerConvexHull{T,F}(; orientation, collinear, sortedby)
 
 mutable struct ChanUpperConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
@@ -92,6 +122,16 @@ function ChanUpperConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear:
     hull = TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}()
     return ChanUpperConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby)
 end
+"""
+    h = ChanUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
+
+An upper convex hull that distributes its points across multiple [`MutableUpperConvexHull`](@ref)
+sub-hulls and merges them on demand. The upper hull spans from the leftmost to the rightmost
+point along the top boundary. Supports the same keyword arguments and incremental operations
+as [`MutableUpperConvexHull`](@ref), but does not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+
+See also: [`ChanConvexHull`](@ref), [`ChanLowerConvexHull`](@ref), [`addpoint!`](@ref), [`mergepoints!`](@ref), [`removepoint!`](@ref)
+"""
 ChanUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = ChanUpperConvexHull{T,F}(; orientation, collinear, sortedby)
 
 function Base.empty!(h::AbstractChanConvexHull)

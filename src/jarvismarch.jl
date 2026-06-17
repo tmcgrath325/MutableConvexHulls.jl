@@ -162,7 +162,7 @@ end
 """
     h = jarvismarch(points [; orientation, collinear, sortedby])
 
-Return the convex hull generated from the provided `points`.
+Return a [`MutableConvexHull`](@ref) containing the convex hull of the provided `points`.
 
 `points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
@@ -186,7 +186,7 @@ jarvismarch(points::AbstractMatrix; kwargs...) = jarvismarch(rowpoints(points); 
 """
     lh = lower_jarvismarch(points [; orientation, collinear, sortedby])
 
-Return the lower convex hull generated from the provided `points`.
+Return a [`MutableLowerConvexHull`](@ref) containing the lower convex hull of the provided `points`.
 
 `points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
@@ -210,7 +210,7 @@ lower_jarvismarch(points::AbstractMatrix; kwargs...) = lower_jarvismarch(rowpoin
 """
     uh = upper_jarvismarch(points [; orientation, collinear, sortedby])
 
-Return the upper convex hull generated from the provided `points`.
+Return a [`MutableUpperConvexHull`](@ref) containing the upper convex hull of the provided `points`.
 
 `points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 

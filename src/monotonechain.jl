@@ -208,7 +208,7 @@ end
 """
     lh = lower_monotonechain(points [; orientation, collinear, sortedby])
 
-Return the lower convex hull generated from the provided `points`.
+Return a [`MutableLowerConvexHull`](@ref) containing the lower convex hull of the provided `points`.
 
 `points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
@@ -234,7 +234,7 @@ lower_monotonechain(points::AbstractMatrix; kwargs...) = lower_monotonechain(row
 """
     uh = upper_monotonechain(points [; orientation, collinear, sortedby])
 
-Return the upper convex hull generated from the provided `points`.
+Return a [`MutableUpperConvexHull`](@ref) containing the upper convex hull of the provided `points`.
 
 `points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
@@ -260,7 +260,7 @@ upper_monotonechain(points::AbstractMatrix; kwargs...) = upper_monotonechain(row
 """
     h = monotonechain(points [; orientation, collinear, sortedby])
 
-Return the convex hull generated from the provided `points`.
+Return a [`MutableConvexHull`](@ref) containing the convex hull of the provided `points`.
 
 `points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
@@ -269,6 +269,14 @@ Return the convex hull generated from the provided `points`.
 `collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
 
 `sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
+
+# Examples
+```jldoctest
+julia> points = [(0.0, 0.0), (1.0, 0.0), (0.5, 0.5), (1.0, 1.0), (0.0, 1.0)];
+
+julia> monotonechain(points)
+MutableConvexHull{Tuple{Float64, Float64}, typeof(identity)}((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
+```
 """
 function monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
     pointslist = PointList{T}(;sortedby=sortedby)
