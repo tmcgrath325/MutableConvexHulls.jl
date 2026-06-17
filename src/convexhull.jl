@@ -1,3 +1,12 @@
+"""
+    AbstractConvexHull{T}
+
+Abstract supertype for all convex hull types over 2-D points of type `T`.
+
+Concrete subtypes: [`MutableConvexHull`](@ref), [`MutableLowerConvexHull`](@ref),
+[`MutableUpperConvexHull`](@ref), [`ChanConvexHull`](@ref), [`ChanLowerConvexHull`](@ref),
+[`ChanUpperConvexHull`](@ref).
+"""
 abstract type AbstractConvexHull{T} end
 
 mutable struct MutableConvexHull{T, F<:Function} <: AbstractConvexHull{T}

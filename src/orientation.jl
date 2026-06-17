@@ -1,4 +1,11 @@
 @enum HullOrientation CW CCW
+
+"Clockwise hull orientation: hull vertices are listed in clockwise order. See also [`CCW`](@ref)."
+CW
+
+"Counterclockwise hull orientation: hull vertices are listed in counterclockwise order. See also [`CW`](@ref)."
+CCW
+
 Base.:(!)(o::HullOrientation) = o === CCW ? CW : CCW
 
 # default previous edge direction initializations
