@@ -5,7 +5,7 @@ using MutableConvexHulls: ChanHullCache, chanhullsidentical
 function build_random_hull(H::Type{<:AbstractConvexHull}, n::Int=1024, m::Int=4; subhullcaches=true, orientation=CCW, collinear::Bool=false, sortedby=identity)
     coords = [(rand(), randn()) for i=1:n]
 
-    h = H{eltype(coords)}(orientation, collinear, sortedby)
+    h = H{eltype(coords)}(; orientation, collinear, sortedby)
     h.cache = ChanHullCache{eltype(coords)}()
     if subhullcaches
         h.subhulls[1].points.cache = SkipListCache{eltype(coords)}()
@@ -16,6 +16,30 @@ function build_random_hull(H::Type{<:AbstractConvexHull}, n::Int=1024, m::Int=4;
         removepoint!(h, getnode(h.hull, popidx))
     end
     return h
+end
+
+@testset "emptycache! with ChanHullCache" begin
+    for H in [ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull]
+        @testset "$H" begin
+            coords = [(rand(), randn()) for _ in 1:20]
+            h = H{eltype(coords)}()
+            h.cache = ChanHullCache{eltype(coords)}()
+            mergepoints!(h, coords)
+            @test !isempty(h.cache.data)
+            empty!(h)
+            @test isempty(h.cache.data)
+            @test isempty(h)
+        end
+    end
+end
+
+@testset "copyfromcache requires an initialized cache" begin
+    for H in [ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull]
+        h = H{Tuple{Float64,Float64}}()
+        @test isnothing(h.cache)
+        @test_throws ArgumentError MutableConvexHulls.copyfromcache(h)
+        @test_throws "initialized cache" MutableConvexHulls.copyfromcache(h)
+    end
 end
 
 @testset "cache" begin

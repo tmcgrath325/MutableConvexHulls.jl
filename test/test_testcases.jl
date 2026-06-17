@@ -12,7 +12,7 @@
         [(-6.2439818800893345, -0.04246981487863836), (-6.212466543837844, -0.062191469382781084), (-4.825781500808825, -0.18387287334976443), (-2.9043631254765314, -0.06217652402829946), (-1.9524199699468225, -1.096371210054782e-6)]
     ];
 
-    chanhull = ChanLowerConvexHull{eltype(subhullpoints[1])}(CCW, true, sortedby);
+    chanhull = ChanLowerConvexHull{eltype(subhullpoints[1])}(; collinear=true, sortedby);
     chanhull.subhulls = [lower_monotonechain(pts; collinear=true, sortedby=sortedby) for pts in subhullpoints];
 
     jarvishull = lower_jarvismarch(collect(Iterators.flatten(subhullpoints)); orientation=CCW, collinear=true, sortedby=sortedby)

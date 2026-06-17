@@ -1,23 +1,16 @@
 @enum HullOrientation CW CCW
+
+"Clockwise hull orientation: hull vertices are listed in clockwise order. See also [`CCW`](@ref)."
+CW
+
+"Counterclockwise hull orientation: hull vertices are listed in counterclockwise order. See also [`CW`](@ref)."
+CCW
+
 Base.:(!)(o::HullOrientation) = o === CCW ? CW : CCW
 
 # default previous edge direction initializations
 const UP = (0,1)
 const DOWN = (0,-1)
-
-# checks if a set of points are collinear
-iscollinear(prevedge, o, a) = (cross2d(prevedge, sub2d(a,o)) == 0)
-function iscollinear(points)
-    length(points) < 3 && return true
-    o = points[1]
-    a = points[2]
-    dir = sub2d(a,o)
-    for p in points[3:end]
-        iscollinear(dir, a, p) || return false
-        a = p
-    end
-    return true
-end    
 
 # The following three methods are only meant to be called if the cross product is zero. They check if the next candidate edge is aligned with the previous edge.
 isaligned(prevedge,nextedge) = dot2d(prevedge, nextedge) > 0

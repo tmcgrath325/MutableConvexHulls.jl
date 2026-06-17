@@ -1,3 +1,14 @@
+"""
+    AbstractChanConvexHull{T}
+
+Abstract supertype for convex hulls that distribute their points across multiple
+[`MutableConvexHull`](@ref)-style sub-hulls and merge the results.
+
+Concrete subtypes are [`ChanConvexHull`](@ref), [`ChanLowerConvexHull`](@ref), and
+[`ChanUpperConvexHull`](@ref). They support the same incremental operations as their
+`Mutable*` counterparts (`addpoint!`, `mergepoints!`, `removepoint!`, `insidehull`)
+but do not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+"""
 abstract type AbstractChanConvexHull{T} <: AbstractConvexHull{T} end
 
 # for debugging
@@ -41,65 +52,104 @@ end
 emptycache!(::Nothing) = nothing
 
 mutable struct ChanConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
-    hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
+    const hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
     subhulls::Vector{MutableConvexHull{T,F}}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
     cache::Union{Nothing, ChanHullCache{T}}
     function ChanConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby, cache=nothing) where {T,F}
         return new(hull, subhulls, orientation, collinear, sortedby, cache)
     end
 end
-function ChanConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
-    subhulls = [MutableConvexHull{T,F}(orientation, collinear, sortedby)]
+function ChanConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
+    subhulls = [MutableConvexHull{T,F}(; orientation, collinear, sortedby)]
     hull = TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}()
     return ChanConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby)
 end
-ChanConvexHull{T}(orientation::HullOrientation=CCW,collinear::Bool=false,sortedby::F=identity) where {T,F} = ChanConvexHull{T,F}(orientation,collinear,sortedby)
+"""
+    h = ChanConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
+
+A full convex hull that distributes its points across multiple [`MutableConvexHull`](@ref)
+sub-hulls and merges them on demand. Supports the same keyword arguments and incremental
+operations as [`MutableConvexHull`](@ref), but does not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+
+See also: [`ChanLowerConvexHull`](@ref), [`ChanUpperConvexHull`](@ref), [`addpoint!`](@ref), [`mergepoints!`](@ref), [`removepoint!`](@ref)
+"""
+ChanConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = ChanConvexHull{T,F}(; orientation, collinear, sortedby)
 
 mutable struct ChanLowerConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
-    hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
+    const hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
     subhulls::Vector{MutableLowerConvexHull{T,F}}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
     cache::Union{Nothing, ChanHullCache{T}}
     function ChanLowerConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby, cache=nothing) where {T,F}
         return new(hull, subhulls, orientation, collinear, sortedby, cache)
     end
 end
-function ChanLowerConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
-    subhulls = [MutableLowerConvexHull{T,F}(orientation, collinear, sortedby)]
+function ChanLowerConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
+    subhulls = [MutableLowerConvexHull{T,F}(; orientation, collinear, sortedby)]
     hull = TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}()
     return ChanLowerConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby)
 end
-ChanLowerConvexHull{T}(orientation::HullOrientation=CCW,collinear::Bool=false,sortedby::F=identity) where {T,F} = ChanLowerConvexHull{T,F}(orientation,collinear,sortedby)
+"""
+    h = ChanLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
+
+A lower convex hull that distributes its points across multiple [`MutableLowerConvexHull`](@ref)
+sub-hulls and merges them on demand. The lower hull spans from the leftmost to the rightmost
+point along the bottom boundary. Supports the same keyword arguments and incremental operations
+as [`MutableLowerConvexHull`](@ref), but does not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+
+See also: [`ChanConvexHull`](@ref), [`ChanUpperConvexHull`](@ref), [`addpoint!`](@ref), [`mergepoints!`](@ref), [`removepoint!`](@ref)
+"""
+ChanLowerConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = ChanLowerConvexHull{T,F}(; orientation, collinear, sortedby)
 
 mutable struct ChanUpperConvexHull{T, F<:Function} <: AbstractChanConvexHull{T}
-    hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
+    const hull::TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}
     subhulls::Vector{MutableUpperConvexHull{T,F}}
-    orientation::HullOrientation
-    collinear::Bool
-    sortedby::F
+    const orientation::HullOrientation
+    const collinear::Bool
+    const sortedby::F
     cache::Union{Nothing, ChanHullCache{T}}
     function ChanUpperConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby, cache=nothing) where {T,F}
         new(hull, subhulls, orientation, collinear, sortedby, cache)
     end
 end
-function ChanUpperConvexHull{T,F}(orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
-    subhulls = [MutableUpperConvexHull{T,F}(orientation, collinear, sortedby)]
+function ChanUpperConvexHull{T,F}(; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::F=identity) where {T,F}
+    subhulls = [MutableUpperConvexHull{T,F}(; orientation, collinear, sortedby)]
     hull = TargetedLinkedList{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},PointNode{T,PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F},HullNode{T,HullList{T,F},F}}}()
     return ChanUpperConvexHull{T,F}(hull, subhulls, orientation, collinear, sortedby)
 end
-ChanUpperConvexHull{T}(orientation::HullOrientation=CCW,collinear::Bool=false,sortedby::F=identity) where {T,F} = ChanUpperConvexHull{T,F}(orientation,collinear,sortedby)
+"""
+    h = ChanUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby=identity)
 
-function Base.empty!(h::AbstractChanConvexHull) 
+An upper convex hull that distributes its points across multiple [`MutableUpperConvexHull`](@ref)
+sub-hulls and merges them on demand. The upper hull spans from the leftmost to the rightmost
+point along the top boundary. Supports the same keyword arguments and incremental operations
+as [`MutableUpperConvexHull`](@ref), but does not accept [`mergehulls!`](@ref)/[`mergehulls`](@ref).
+
+See also: [`ChanConvexHull`](@ref), [`ChanLowerConvexHull`](@ref), [`addpoint!`](@ref), [`mergepoints!`](@ref), [`removepoint!`](@ref)
+"""
+ChanUpperConvexHull{T}(; orientation=CCW, collinear=false, sortedby::F=identity) where {T,F} = ChanUpperConvexHull{T,F}(; orientation, collinear, sortedby)
+
+function Base.empty!(h::AbstractChanConvexHull)
     empty!(h.hull)
-    subhulls = [subhulls[1]]
-    empty!(subhulls[1])
+    h.subhulls = [h.subhulls[1]]
+    empty!(h.subhulls[1])
     emptycache!(h.cache)
     return h
+end
+
+# Deep copy: duplicate each subhull, then rebuild the merged hull and cache so
+# the copy shares no linked-list nodes with `h`.
+function Base.copy(h::H) where {T, H<:AbstractChanConvexHull{T}}
+    hcopy = H(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
+    hcopy.subhulls = [copy(sh) for sh in h.subhulls]
+    merge_hull_lists!(hcopy)
+    hcopy.cache = h.cache === nothing ? nothing : deepcopy(h.cache)
+    return hcopy
 end
 
 # Iterating a convex hull returns the data contained in the nodes of its hull list
@@ -109,7 +159,7 @@ Base.iterate(h::AbstractChanConvexHull, node::TargetedListNode) = iterate(h.hull
 function growsubhulls!(h::AbstractChanConvexHull{T}) where T
     npoints = sum(length, h.subhulls)
     while npoints > 3 && length(h.subhulls)^2 < npoints
-        push!(h.subhulls, eltype(h.subhulls)(h.orientation, h.collinear, h.sortedby))
+        push!(h.subhulls, eltype(h.subhulls)(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby))
         if (h.subhulls[1].points.cache !== nothing)
             h.subhulls[end].points.cache = PairedLinkedLists.SkipListCache{T}()
         end
@@ -154,14 +204,22 @@ function removepoint!(h::AbstractChanConvexHull{T}, node::PointNode{T}) where T
     return h, updatedhull
 end
 
+function removepoint!(h::AbstractChanConvexHull{T}, value::T) where T
+    for shull in h.subhulls
+        node = findpointnode(shull.points, value)
+        node === nothing || return removepoint!(h, node)
+    end
+    throw(ArgumentError("No point equal to $value is contained in the convex hull"))
+end
+
 
 function copyfromcache(h::H) where {T,H<:AbstractChanConvexHull{T}}
-    @assert !isnothing(h.cache)
-    hcopy = H(h.orientation, h.collinear, h.sortedby)
+    isnothing(h.cache) && throw(ArgumentError("copyfromcache requires a hull with an initialized cache, but h.cache is nothing"))
+    hcopy = H(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby)
     hcopy.cache = ChanHullCache{T}()
     hcopy.subhulls[1].points.cache = typeof(h.subhulls[1].points.cache)()
     for i=2:length(h.subhulls)
-        push!(hcopy.subhulls, eltype(h.subhulls)(h.orientation, h.collinear, h.sortedby))
+        push!(hcopy.subhulls, eltype(h.subhulls)(; orientation=h.orientation, collinear=h.collinear, sortedby=h.sortedby))
         hcopy.subhulls[end].points.cache = typeof(h.subhulls[i].points.cache)()
     end
     pointstoadd = T[]
@@ -174,8 +232,12 @@ function copyfromcache(h::H) where {T,H<:AbstractChanConvexHull{T}}
                 mergepoints!(hcopy.subhulls[currentshullidx], pointstoadd)
             else
                 pointstoadd = sort(pointstoadd; by = h.sortedby)
-                @assert pointstoadd == h.subhulls[currentshullidx].points.cache.data[(length(hcopy.subhulls[currentshullidx].points.cache.data)+1):shullcounters[currentshullidx]]
-                @assert levelstoadd == h.subhulls[currentshullidx].points.cache.levels[(length(hcopy.subhulls[currentshullidx].points.cache.levels)+1):shullcounters[currentshullidx]]
+                # Internal invariant: the points and levels reconstructed for this
+                # subhull must equal those recorded in its skip-list cache. A mismatch
+                # means the cache and skip-list have diverged. Thrown rather than
+                # @assert so the check runs regardless of optimization level.
+                pointstoadd == h.subhulls[currentshullidx].points.cache.data[(length(hcopy.subhulls[currentshullidx].points.cache.data)+1):shullcounters[currentshullidx]] || throw(AssertionError("copyfromcache: reconstructed points disagree with the subhull's skip-list cache"))
+                levelstoadd == h.subhulls[currentshullidx].points.cache.levels[(length(hcopy.subhulls[currentshullidx].points.cache.levels)+1):shullcounters[currentshullidx]] || throw(AssertionError("copyfromcache: reconstructed levels disagree with the subhull's skip-list cache"))
                 for (point, level) in zip(pointstoadd, levelstoadd)
                     PairedLinkedLists.pushskip!(hcopy.subhulls[currentshullidx].points, point, level)
                     monotonechain!(hcopy.subhulls[currentshullidx])

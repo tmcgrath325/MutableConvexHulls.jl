@@ -1,6 +1,10 @@
 # planar coordinates
-coords(data) = (data[1], data[2])
 coordsareequal(data1, data2) = data1[1] == data2[1] && data1[2] == data2[2]
+
+# Treat each row of a matrix as one point, returning a vector of point tuples.
+# Iterates `eachrow` so rows are taken in `axes(points, 1)` order, supporting
+# views, adjoints, and matrices with non-1-based axes.
+rowpoints(points::AbstractMatrix) = [(row...,) for row in eachrow(points)]
 
 # 2D subtraction of data
 sub2d(a, b) = (DoubleFloat(a[1]) - DoubleFloat(b[1]), DoubleFloat(a[2]) - DoubleFloat(b[2]))

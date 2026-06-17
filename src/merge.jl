@@ -1,41 +1,48 @@
-function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
-    pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
-    pointslist.len == 1 && return head(pointslist)
-    coordsareequal(head(pointslist).data, tail(pointslist).data) && throw(ArgumentError("All points in the list are duplicates."))
-    # find nodes around the start of the list that are distinct from the query data
-    prevnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=true))
-    prevnode === nothing && return head(pointslist)
-    currentnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=false))
-    currentnode === prevnode && return currentnode
-    nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-    if nextnode === nothing 
-        return betterturn(prevedge, query.data, prevnode.data, currentnode.data) ? currentnode : prevnode
-    end
-    # initialize comparision with previous node
-    prev_worse = !betterturn(prevedge, query.data, currentnode.data, prevnode.data)
-
-    while nextnode !== nothing
-        # since points are sorted, the next point should present a "better turn" than the preceding or following points
-        next_worse = !betterturn(prevedge, query.data, currentnode.data, nextnode.data)
-        if prev_worse && next_worse
-            return currentnode
-        end
-        prev_worse = !next_worse
-        prevnode = currentnode
-        currentnode = nextnode
-        nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-    end
-    return currentnode
-end
+# jarvissortedsearch is a potential optimization of jarvissearch that exploits the
+# sorted order of the hull list. It is not currently used (jarvissearch is used instead)
+# but is retained as a reference for future optimization work.
+#
+# function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
+#     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
+#     pointslist.len == 1 && return head(pointslist)
+#     coordsareequal(head(pointslist).data, tail(pointslist).data) && throw(ArgumentError("All points in the list are duplicates."))
+#     # find nodes around the start of the list that are distinct from the query data
+#     prevnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=true))
+#     prevnode === nothing && return head(pointslist)
+#     currentnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=false))
+#     currentnode === prevnode && return currentnode
+#     nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
+#     if nextnode === nothing
+#         return betterturn(prevedge, query.data, prevnode.data, currentnode.data) ? currentnode : prevnode
+#     end
+#     # initialize comparision with previous node
+#     prev_worse = !betterturn(prevedge, query.data, currentnode.data, prevnode.data)
+#
+#     while nextnode !== nothing
+#         # since points are sorted, the next point should present a "better turn" than the preceding or following points
+#         next_worse = !betterturn(prevedge, query.data, currentnode.data, nextnode.data)
+#         if prev_worse && next_worse
+#             return currentnode
+#         end
+#         prev_worse = !next_worse
+#         prevnode = currentnode
+#         currentnode = nextnode
+#         nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
+#     end
+#     return currentnode
+# end
 
 
 """
     mergehulls!(hull, otherhulls...)
 
-Merge the points contained in `otherhulls` into `hull`. See [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm)
+Merge the points contained in `otherhulls` into `hull` and return `hull`. All
+arguments must be the same concrete hull type (`MutableConvexHull`,
+`MutableLowerConvexHull`, or `MutableUpperConvexHull`); [`AbstractChanConvexHull`](@ref)
+subtypes are not accepted. See [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm)
 for a similar approach.
 """
-function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
+function mergehulls!(h::H, others::H...) where H<:Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull}
     mergedhull = h.hull
     mergedpoints = h.points
     
@@ -74,96 +81,98 @@ function mergehulls!(h::H, others::H...) where H<:AbstractConvexHull
     merge_hull_lists!(mergedhull, hulltargets, buildinreverse(h), h.orientation, h.collinear, h.sortedby, targetscollinear, partial, upper)
     return h
 end
-mergehulls(h::H, others::H...) where H <: AbstractConvexHull = mergehulls!(copy(h), others...)
+"""
+    mergehulls(hull, otherhulls...)
 
-function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)  
-    try
-        empty!(mergedhull) # start with an empty hull
-        # handle simple cases
-        isempty(hulltargets) && return empty!(mergedhull)
-        if length(hulltargets) == 1
-            ht = only(hulltargets)
-            if (length(ht) == 1)
-                hthead = head(ht)
-                push!(mergedhull, hthead.data)
-                addtarget!(tail(mergedhull), hthead.target)
-                return mergedhull
-            end
+Return a new hull of the same type as `hull` containing the points of `hull` and
+`otherhulls`, without mutating any argument. See [`mergehulls!`](@ref) for the
+in-place form.
+"""
+mergehulls(h::H, others::H...) where H <: Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull} = mergehulls!(copy(h), others...)
+
+function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)
+    empty!(mergedhull) # start with an empty hull
+    # handle simple cases
+    isempty(hulltargets) && return empty!(mergedhull)
+    if length(hulltargets) == 1
+        ht = only(hulltargets)
+        if (length(ht) == 1)
+            hthead = head(ht)
+            push!(mergedhull, hthead.data)
+            addtarget!(tail(mergedhull), hthead.target)
+            return mergedhull
         end
-        # determine starting and stopping points for general case
-        f = x -> sortedby(x.data)
-        start = rev ? argmax(f, [head(x) for x in hulltargets]) :
-                    argmin(f, [head(x) for x in hulltargets])
-        stop = start
-        if partial
-            stop = rev ? argmin(f, [tail(x) for x in hulltargets]) :
-                        argmax(f, [tail(x) for x in hulltargets])
-        end
-        stopdata = stop.data
-
-        maxlength = sum(length, hulltargets)
-
-        # add first point to hull
-        pushfirst!(mergedhull, start.data)
-        addtarget!(head(mergedhull), start.target)
-
-        maxlength <= 1 && return mergedhull
-        
-        # prepare orientation test
-        betterturn(prevedge,o,a,b) = collinear ? iscloserturn(!orientation,prevedge,o,a,b) : isfurtherturn(!orientation,prevedge,o,a,b)
-
-        # perform jarvis march with search that makes use of the sorted nature of the hulls
-        counter = 0
-        current = start
-        currentdata = current.data
-        prevdata = currentdata
-        candidates = [head(x) for x in hulltargets]
-        prevedge = upper ? UP : DOWN
-        while counter == 0 || current !== stop
-            if counter > maxlength
-                throw(ErrorException("More points were added to the hull ($counter) than exist in the original hulls to be merged ($maxlength)."))
-            end
-            counter += 1
-            for (i, ht) in enumerate(hulltargets)
-                # candidates[i] = (current.list === ht &&                                 # If the current point belongs to the list being considered, we already know 
-                #                  !(!collinear && targetscollinear[i])) ?                # its candidate point as long as it doesn't contain extraneous collinear points.                                             
-                #     (attail(current.next) ? head(ht) : current.next) :                  # TODO: Ambiguous direction (when a subhull is entirely collinear) can cause issues           
-                #     jarvissortedsearch(current, prevedge, ht, betterturn)
-                # candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
-                candidates[i] = jarvissearch(current, prevedge, ListNodeIterator(ht), betterturn)
-            end
-            next = jarvissearch(current, prevedge, candidates, betterturn)
-            if coordsareequal(current.data, next.data)
-                if length(mergedhull) == 1
-                    return mergedhull
-                else
-                    throw(ErrorException("Jarvis March failed to progress."))
-                end
-            end
-            nextdata = next.data
-            # stop adding points when the stopping point has been reached
-            if coordsareequal(prevdata, nextdata) || coordsareequal(stopdata, nextdata)
-                break
-            end
-            prevdata = currentdata
-            currentdata = nextdata
-            # add the next node to the hull
-            push!(mergedhull, next.data)
-            addtarget!(tail(mergedhull), next.target)
-            prevedge = sub2d(next.data, current.data)
-            current = next
-        end
-
-        # if these are only partial convex hulls (i.e. upper or lower), add the stopping point at the end of the hull
-        if partial
-            push!(mergedhull, stop.data)
-            addtarget!(tail(mergedhull), stop.target)
-        end
-        return mergedhull
-    catch e
-        @warn("Falling back to Jarvis March for merge step due to error: $e")
-        fallback_merge_hull_lists!(mergedhull, hulltargets, rev, orientation, collinear, sortedby, targetscollinear, partial, upper)
     end
+    # determine starting and stopping points for general case
+    f = x -> sortedby(x.data)
+    start = rev ? argmax(f, [head(x) for x in hulltargets]) :
+                argmin(f, [head(x) for x in hulltargets])
+    stop = start
+    if partial
+        stop = rev ? argmin(f, [tail(x) for x in hulltargets]) :
+                    argmax(f, [tail(x) for x in hulltargets])
+    end
+    stopdata = stop.data
+
+    maxlength = sum(length, hulltargets)
+
+    # add first point to hull
+    pushfirst!(mergedhull, start.data)
+    addtarget!(head(mergedhull), start.target)
+
+    maxlength <= 1 && return mergedhull
+
+    # prepare orientation test
+    betterturn(prevedge,o,a,b) = collinear ? iscloserturn(!orientation,prevedge,o,a,b) : isfurtherturn(!orientation,prevedge,o,a,b)
+
+    # perform jarvis march with search that makes use of the sorted nature of the hulls
+    counter = 0
+    current = start
+    currentdata = current.data
+    prevdata = currentdata
+    candidates = [head(x) for x in hulltargets]
+    prevedge = upper ? UP : DOWN
+    while counter == 0 || current !== stop
+        if counter > maxlength
+            throw(ErrorException("More points were added to the hull ($counter) than exist in the original hulls to be merged ($maxlength)."))
+        end
+        counter += 1
+        for (i, ht) in enumerate(hulltargets)
+            # candidates[i] = (current.list === ht &&                                 # If the current point belongs to the list being considered, we already know
+            #                  !(!collinear && targetscollinear[i])) ?                # its candidate point as long as it doesn't contain extraneous collinear points.
+            #     (attail(current.next) ? head(ht) : current.next) :                  # TODO: Ambiguous direction (when a subhull is entirely collinear) can cause issues
+            #     jarvissortedsearch(current, prevedge, ht, betterturn)
+            # candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
+            candidates[i] = jarvissearch(current, prevedge, ListNodeIterator(ht), betterturn)
+        end
+        next = jarvissearch(current, prevedge, candidates, betterturn)
+        if coordsareequal(current.data, next.data)
+            if length(mergedhull) == 1
+                return mergedhull
+            else
+                throw(ErrorException("Jarvis March failed to progress."))
+            end
+        end
+        nextdata = next.data
+        # stop adding points when the stopping point has been reached
+        if coordsareequal(prevdata, nextdata) || coordsareequal(stopdata, nextdata)
+            break
+        end
+        prevdata = currentdata
+        currentdata = nextdata
+        # add the next node to the hull
+        push!(mergedhull, next.data)
+        addtarget!(tail(mergedhull), next.target)
+        prevedge = sub2d(next.data, current.data)
+        current = next
+    end
+
+    # if these are only partial convex hulls (i.e. upper or lower), add the stopping point at the end of the hull
+    if partial
+        push!(mergedhull, stop.data)
+        addtarget!(tail(mergedhull), stop.target)
+    end
+    return mergedhull
 end
 
 function merge_hull_lists!(h::AbstractChanConvexHull)

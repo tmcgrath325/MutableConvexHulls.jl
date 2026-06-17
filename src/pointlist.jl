@@ -1,10 +1,15 @@
-using PairedLinkedLists: AbstractPairedListNode, AbstractPairedSkipNode, AbstractPairedLinkedList, AbstractPairedSkipList, SkipListCache
-
 abstract type AbstractHullNode{T,L,F} <: AbstractPairedListNode{T,L} end
 abstract type AbstractHullList{T,F} <: AbstractPairedLinkedList{T} end
 abstract type AbstractPointList{T,R,N,F} <: AbstractPairedSkipList{T,F} end
 
 
+"""
+    PointNode{T,...}
+
+A node in a [`PointList`](@ref), carrying a tracked 2-D point of type `T`. Every point passed
+to a hull — hull vertex or interior point — is stored as a `PointNode`. Accessible as
+elements of a hull's `h.points` list; iterate over them with [`MutableConvexHulls.PointNodeIterator`](@ref).
+"""
 mutable struct PointNode{T,L<:AbstractPointList{T},N<:AbstractHullNode{T}} <: AbstractPairedSkipNode{T,L}
     list::L
     data::T
@@ -33,6 +38,13 @@ mutable struct PointNode{T,L<:AbstractPointList{T},N<:AbstractHullNode{T}} <: Ab
     end
 end
 
+"""
+    PointList{T,...}
+
+A sorted skip-list of all 2-D points of type `T` tracked by a hull — hull vertices and interior
+points alike. Accessible as `h.points` on any convex hull; iterate with
+[`MutableConvexHulls.PointNodeIterator`](@ref).
+"""
 mutable struct PointList{T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Function} <: AbstractPointList{T,R,N,F}
     len::Int
     nlevels::Int
@@ -78,6 +90,12 @@ mutable struct PointList{T,R<:AbstractHullList{T},N<:AbstractHullNode{T},F<:Func
         return l
     end
 end
+"""
+    HullNode{T,...}
+
+A node in a [`HullList`](@ref), carrying one hull-vertex value of type `T`. Accessible as
+elements of a hull's `h.hull` list; iterate with [`MutableConvexHulls.HullNodeIterator`](@ref).
+"""
 mutable struct HullNode{T,L<:AbstractHullList{T},F<:Function} <: AbstractHullNode{T,L,F}
     list::L
     data::T
@@ -100,6 +118,13 @@ mutable struct HullNode{T,L<:AbstractHullList{T},F<:Function} <: AbstractHullNod
     end
 end
 
+"""
+    HullList{T,F}
+
+A doubly-linked list of hull vertices of type `T`, sorted by function `F`. Each element is a
+[`HullNode`](@ref). Accessible as `h.hull` on any convex hull; iterate with
+[`MutableConvexHulls.HullNodeIterator`](@ref), or iterate the hull directly.
+"""
 mutable struct HullList{T,F<:Function} <: AbstractHullList{T,F}
     len::Int
     target::Union{HullList{T,F}, PointList{T,HullList{T,F},HullNode{T,HullList{T,F},F},F}}

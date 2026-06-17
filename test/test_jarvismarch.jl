@@ -44,7 +44,7 @@
         uppercollinear = upper_jarvismarch(boxcoords; collinear = true)
         uppercollinearCW = upper_jarvismarch(boxcoords; orientation=CW, collinear=true)
         @test collect(uppercollinear.hull) == [[(i,last(jrange)) for i in reverse(irange)]..., [(first(irange), j) for j in reverse(jrange)[2:end]]...]
-        @test collect(uppercollinearCW) == reverse(collect(uppercollinear.hull))
+        @test collect(uppercollinearCW.hull) == reverse(collect(uppercollinear.hull))
         for u in [upper, upperCW, uppercollinear, uppercollinearCW]
             @test collect(u.hull) == collect(MCH.jarvismarch!(u).hull)
         end
@@ -88,6 +88,38 @@
         @test collect(hullcollinearCW2.hull) == reverse(circshift(collect(hullcollinear2.hull),Int(length(hullcollinear2.hull)/2-1))) 
         for h in [hull2, hullCW2, hullcollinear2, hullcollinearCW2]
             @test collect(h.hull) == collect(MCH.jarvismarch!(h).hull)
+        end
+    end
+
+    @testset "Matrix input" begin
+        m = [p[k] for p in boxcoords, k in 1:2]
+        @test lower_jarvismarch(m) == lower_jarvismarch(boxcoords)
+        @test upper_jarvismarch(m) == upper_jarvismarch(boxcoords)
+        @test jarvismarch(m)       == jarvismarch(boxcoords)
+
+        # configuration keywords are forwarded through the matrix form
+        @test collect(jarvismarch(m; orientation=CW).hull) == collect(jarvismarch(boxcoords; orientation=CW).hull)
+        @test collect(lower_jarvismarch(m; collinear=true).hull) == collect(lower_jarvismarch(boxcoords; collinear=true).hull)
+        @test collect(upper_jarvismarch(m; sortedby=by).hull) == collect(upper_jarvismarch(boxcoords; sortedby=by).hull)
+    end
+
+    @testset "jarvismarch! return type — 0 and 1 point" begin
+        T = Tuple{Int,Int}
+        for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+            h0 = H{T}()
+            @test MCH.jarvismarch!(h0) isa H
+            h1 = H{T}()
+            addpoint!(h1, (1, 1))
+            @test MCH.jarvismarch!(h1) isa H
+        end
+    end
+
+    @testset "jarvismarch! rejects an empty hull" begin
+        T = Tuple{Int,Int}
+        for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+            h = H{T}()
+            @test_throws ArgumentError MCH.jarvismarch!(h.hull, h.hull.target, h.collinear, h.orientation, MCH.DOWN)
+            @test_throws "at least one point" MCH.jarvismarch!(h.hull, h.hull.target, h.collinear, h.orientation, MCH.DOWN)
         end
     end
 end

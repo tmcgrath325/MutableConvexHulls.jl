@@ -24,8 +24,7 @@ Each node in the list should contain a two-dimensional point, and the nodes are 
 (e.g. by lowest "x" value and by lowest "y" in case of ties, though some other sorting methods may produce valid results).
 """
 function jarvismarch!(hull::Union{AbstractConvexHull{T},AbstractList{T}}, pointslist, collinear, orientation, initedge, stop::Union{PointNode{T},HullNode{T},Nothing}=nothing) where T
-    # pointslist = h.hull.target   
-    @assert length(hull) > 0
+    length(hull) > 0 || throw(ArgumentError("jarvismarch! requires a hull containing at least one point"))
     if isnothing(stop)
         stop = head(hull)
     end
@@ -136,7 +135,7 @@ function jarvismarch!(h::MutableUpperConvexHull)
         push!(h.hull, first(h.hull.target))
         addtarget!(head(h.hull), head(h.hull.target))
     end
-    length(h.hull.target) <= 1 && return h.hull
+    length(h.hull.target) <= 1 && return h
 
     # select the appropriate starting and stopping nodes
     f = node -> h.sortedby(node.data)
@@ -163,7 +162,9 @@ end
 """
     h = jarvismarch(points [; orientation, collinear, sortedby])
 
-Return the convex hull generated from the provided `points`.
+Return a [`MutableConvexHull`](@ref) containing the convex hull of the provided `points`.
+
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -175,16 +176,19 @@ function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    !isempty(points) && push!(pointslist, points...)
+    for p in points; push!(pointslist, p); end
     h = MutableConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
 end
+jarvismarch(points::AbstractMatrix; kwargs...) = jarvismarch(rowpoints(points); kwargs...)
 
 """
     lh = lower_jarvismarch(points [; orientation, collinear, sortedby])
 
-Return the lower convex hull generated from the provided `points`.
+Return a [`MutableLowerConvexHull`](@ref) containing the lower convex hull of the provided `points`.
+
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -196,16 +200,19 @@ function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientati
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    !isempty(points) && push!(pointslist, points...)
+    for p in points; push!(pointslist, p); end
     h = MutableLowerConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
 end
+lower_jarvismarch(points::AbstractMatrix; kwargs...) = lower_jarvismarch(rowpoints(points); kwargs...)
 
 """
     uh = upper_jarvismarch(points [; orientation, collinear, sortedby])
 
-Return the upper convex hull generated from the provided `points`.
+Return a [`MutableUpperConvexHull`](@ref) containing the upper convex hull of the provided `points`.
+
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -217,8 +224,9 @@ function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientati
     pointslist = PointList{T}(;sortedby=sortedby)
     hull = HullList{T,typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    !isempty(points) && push!(pointslist, points...)
+    for p in points; push!(pointslist, p); end
     h = MutableUpperConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
 end
+upper_jarvismarch(points::AbstractMatrix; kwargs...) = upper_jarvismarch(rowpoints(points); kwargs...)

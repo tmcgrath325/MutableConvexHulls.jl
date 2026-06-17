@@ -56,7 +56,7 @@
         hull = monotonechain(boxcoords) # ; orientation = CCW, collinear = false
         @test hull == monotonechain(dupcoords)
         @test collect(hull.hull) == collect(monotonechain(boxcoords).hull) == [first(boxcoords), (last(boxcoords)[1], first(boxcoords)[2]), last(boxcoords), (first(boxcoords)[1], last(boxcoords)[2])]
-        @test collect(monotonechain(boxcoords; orientation=CW).hull) == reverse(circshift(collect(hull.hull),Int(length(hull.hull)/2-1))) 
+        @test collect(monotonechain(boxcoords; orientation=CW).hull) == reverse(circshift(collect(hull.hull),Int(length(hull.hull)/2-1)))
         hullcollinear = monotonechain(boxcoords; collinear = true)
         @test hullcollinear == monotonechain(dupcoords; collinear = true)
         @test collect(hullcollinear.hull) == collect(monotonechain(boxcoords; collinear=true).hull) == [[(i,first(jrange)) for i in irange]..., [(last(irange), j) for j in jrange[2:end]]..., [(i,last(jrange)) for i in reverse(irange)[2:end]]..., [(first(irange), j) for j in reverse(jrange)[2:end-1]]...]
@@ -66,10 +66,22 @@
         hull2 = monotonechain(boxcoords; sortedby=by) # ; orientation = CCW, collinear = false
         @test hull2 == monotonechain(dupcoords; sortedby=by)
         @test collect(hull2.hull) == [(first(boxcoords)[1], last(boxcoords)[2]), first(boxcoords), (last(boxcoords)[1], first(boxcoords)[2]), last(boxcoords)]
-        @test collect(monotonechain(boxcoords; orientation=CW, sortedby=by).hull) == reverse(circshift(collect(hull2.hull),Int(length(hull2.hull)/2-1))) 
+        @test collect(monotonechain(boxcoords; orientation=CW, sortedby=by).hull) == reverse(circshift(collect(hull2.hull),Int(length(hull2.hull)/2-1)))
         hullcollinear2 = monotonechain(boxcoords; collinear=true, sortedby=by)
         @test hullcollinear2 == monotonechain(dupcoords; collinear=true, sortedby=by)
         @test collect(hullcollinear2.hull) == [[(first(jrange),i) for i in reverse(irange)]..., [(j,first(irange)) for j in jrange[2:end]]..., [(last(jrange),i) for i in irange[2:end]]..., [(j,last(irange)) for j in reverse(jrange)[2:end-1]]...]
-        @test collect(monotonechain(boxcoords; orientation=CW, collinear=true, sortedby=by).hull) == reverse(circshift(collect(hullcollinear2.hull),Int(length(hullcollinear2.hull)/2-1))) 
+        @test collect(monotonechain(boxcoords; orientation=CW, collinear=true, sortedby=by).hull) == reverse(circshift(collect(hullcollinear2.hull),Int(length(hullcollinear2.hull)/2-1)))
+    end
+
+    @testset "Matrix input" begin
+        m = [p[k] for p in boxcoords, k in 1:2]
+        @test lower_monotonechain(m) == lower_monotonechain(boxcoords)
+        @test upper_monotonechain(m) == upper_monotonechain(boxcoords)
+        @test monotonechain(m)       == monotonechain(boxcoords)
+
+        # configuration keywords are forwarded through the matrix form
+        @test collect(monotonechain(m; orientation=CW).hull) == collect(monotonechain(boxcoords; orientation=CW).hull)
+        @test collect(lower_monotonechain(m; collinear=true).hull) == collect(lower_monotonechain(boxcoords; collinear=true).hull)
+        @test collect(upper_monotonechain(m; sortedby=by).hull) == collect(upper_monotonechain(boxcoords; sortedby=by).hull)
     end
 end
