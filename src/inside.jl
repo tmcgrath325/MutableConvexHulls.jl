@@ -13,10 +13,11 @@ Return `true` if `data` lies inside `hull` and `false` otherwise.
 `data` must be a 2-D indexable point, supporting `data[1]` and `data[2]`; a
 scalar or other non-indexable value raises a `BoundsError`.
 
-Boundary handling is governed by `hull.collinear`. With the default
-`collinear=false`, points on an edge or vertex of `hull` count as inside.
+Boundary handling is governed by `hull.collinear`. Points that exactly coincide
+with a hull vertex always count as inside. For non-vertex boundary points, the
+default `collinear=false` treats hull edges as inside; `collinear=true` treats
+them as outside (so they will be added to the hull on merge).
 
-`data ∈ hull` (equivalently `data in hull`) is shorthand for `insidehull(data, hull)`.
 """
 function insidehull(pointdata::T, h::FullHull{T}) where T
     length(h) == 0 && return false
@@ -49,10 +50,10 @@ function insidehull(pointdata::T, h::FullHull{T}) where T
                     nextnode.data != nextnextnode.data && return false
                 # if the point is even with the previous node...
                 elseif pointdata[1] == prevnode.data[1]
-                    abovelower = h.collinear ? pointdata[2] > prevnode.data[2] : pointdata[2] >= prevnode.data[2]
+                    abovelower = coordsareequal(pointdata, prevnode.data) || (h.collinear ? pointdata[2] > prevnode.data[2] : pointdata[2] >= prevnode.data[2])
                 # if the point is even with the next node...
                 elseif pointdata[1] == nextnode.data[1] !== nextnextnode.data[1]
-                    abovelower = h.collinear ? pointdata[2] > nextnode.data[2] : pointdata[2] >= nextnode.data[2]
+                    abovelower = coordsareequal(pointdata, nextnode.data) || (h.collinear ? pointdata[2] > nextnode.data[2] : pointdata[2] >= nextnode.data[2])
                 # if the point is in between the previous and next nodes...
                 elseif ccw ? (prevnode.data[1] < pointdata[1] < nextnode.data[1]) : (prevnode.data[1] > pointdata[1] > nextnode.data[1])
                     yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
@@ -75,10 +76,10 @@ function insidehull(pointdata::T, h::FullHull{T}) where T
                 belowupper && return true # we can stop if we know the hull is within both the upper and lower hulls
             # if the point is even with the previous node...
             elseif pointdata[1] == prevnode.data[1]
-                belowupper = h.collinear ? pointdata[2] < prevnode.data[2] : pointdata[2] <= prevnode.data[2]
+                belowupper = coordsareequal(pointdata, prevnode.data) || (h.collinear ? pointdata[2] < prevnode.data[2] : pointdata[2] <= prevnode.data[2])
             # if the point is even with the next node...
             elseif pointdata[1] == nextnode.data[1]
-                belowupper = h.collinear ? pointdata[2] < nextnode.data[2] : pointdata[2] <= nextnode.data[2]
+                belowupper = coordsareequal(pointdata, nextnode.data) || (h.collinear ? pointdata[2] < nextnode.data[2] : pointdata[2] <= nextnode.data[2])
             # if the point is in between the previous and next nodes...
             elseif ccw ? (prevnode.data[1] >= pointdata[1] >= nextnode.data[1]) : (prevnode.data[1] <= pointdata[1] <= nextnode.data[1])
                 yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
@@ -136,6 +137,7 @@ function insidehull(pointdata::T, h::LowerHull{T}) where T
     for nextnode in h.hull.head.next.next
         prevnode = nextnode.prev
         if ccw ? (prevnode.data[1] <= pointdata[1] <= nextnode.data[1]) : (prevnode.data[1] >= pointdata[1] >= nextnode.data[1])
+            (coordsareequal(pointdata, prevnode.data) || coordsareequal(pointdata, nextnode.data)) && return true
             yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
             if h.collinear ? pointdata[2] > yhull : pointdata[2] >= yhull
                 return true
@@ -189,6 +191,7 @@ function insidehull(pointdata::T, h::UpperHull{T}) where T
     for nextnode in h.hull.head.next.next
         prevnode = nextnode.prev
         if ccw ? (prevnode.data[1] >= pointdata[1] >= nextnode.data[1]) : (prevnode.data[1] <= pointdata[1] <= nextnode.data[1])
+            (coordsareequal(pointdata, prevnode.data) || coordsareequal(pointdata, nextnode.data)) && return true
             yhull = linterp(pointdata[1], prevnode.data, nextnode.data)
             if h.collinear ? pointdata[2] < yhull : pointdata[2] <= yhull
                 return true
@@ -199,5 +202,3 @@ function insidehull(pointdata::T, h::UpperHull{T}) where T
 end
 
 insidehull(pointnode::AbstractNode, h::AbstractConvexHull) = insidehull(pointnode.data, h)
-
-Base.in(item, h::AbstractConvexHull) = insidehull(item, h)

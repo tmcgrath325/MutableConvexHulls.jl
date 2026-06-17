@@ -2,7 +2,7 @@
     boxcoords = [(i,j) for i in 1:10 for j in 1:10]
     by = x -> (x[1], -x[2])
     n = 10
-    
+
     hulltestset("lower convex hull", n, by, boxcoords, MutableLowerConvexHull, lower_jarvismarch)
     hulltestset("upper convex hull", n, by, boxcoords, MutableUpperConvexHull, upper_jarvismarch)
     hulltestset("convex hull",       n, by, boxcoords, MutableConvexHull,      jarvismarch)
@@ -13,7 +13,7 @@ end
     boxcoords = [boxcoords..., boxcoords..., boxcoords...]
     by = x -> (x[1], -x[2])
     n = 10
-    
+
     hulltestset("lower convex hull", n, by, boxcoords, MutableLowerConvexHull, lower_jarvismarch)
     hulltestset("upper convex hull", n, by, boxcoords, MutableUpperConvexHull, upper_jarvismarch)
     hulltestset("convex hull",       n, by, boxcoords, MutableConvexHull,      jarvismarch)
@@ -23,7 +23,7 @@ end
     coords = [(randn(),randn()) for i in 1:10 for j in 1:10]
     by = x -> (x[1], -x[2])
     n = 10
-    
+
     hulltestset("lower convex hull", n, by, coords, MutableLowerConvexHull, lower_jarvismarch)
     hulltestset("upper convex hull", n, by, coords, MutableUpperConvexHull, upper_jarvismarch)
     hulltestset("convex hull",       n, by, coords, MutableConvexHull,      jarvismarch)
@@ -241,41 +241,51 @@ end
             # Strictly interior and exterior points are unaffected by the collinear flag.
             @test insidehull((3, 3), h) == true
             @test insidehull((10, 10), h) == false
-            # h.hull.head.next is the bottom-left corner (1,1), on the hull boundary.
-            # With collinear=false the ≥ test includes the boundary; with collinear=true the > does not.
-            @test insidehull(h.hull.head.next, h) == !collinear
+            # h.hull.head.next is the bottom-left corner (1,1), an exact hull vertex.
+            # Exact vertex matches are always inside regardless of collinear.
+            @test insidehull(h.hull.head.next, h)
         end
     end
 end
 
-@testset "Base.in delegates to insidehull" begin
+@testset "insidehull interior / exterior / boundary" begin
     coords = [(i, j) for i in 1:5 for j in 1:5]
-    queries = [(i, j) for i in 0:6 for j in 0:6]
-    # ∈ / in must agree with insidehull for every hull kind and collinear setting.
-    for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+    # With collinear=false the hull is the 4-corner square; with collinear=true it
+    # includes all collinear boundary grid points as explicit vertices.
+    for collinear in (false, true)
+        h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear)
+        mergepoints!(h, coords)
+        @test insidehull((3, 3), h)                 # strictly interior
+        @test !insidehull((10, 10), h)              # exterior
+        @test insidehull((1, 1), h)                 # corner vertex: always inside regardless of collinear
+        # (1,3) is in the input data: a hull vertex when collinear=true, an edge point when
+        # collinear=false.  In both cases insidehull returns true.
+        @test insidehull((1, 3), h)
+    end
+
+    # Non-vertex boundary points (not in the input data): inside when collinear=false,
+    # outside when collinear=true.
+    fcoords = [(Float64(i), Float64(j)) for i in 1:5 for j in 1:5]
+    for collinear in (false, true)
+        hf = MutableConvexHull{eltype(fcoords)}(; orientation=CCW, collinear)
+        mergepoints!(hf, fcoords)
+        @test insidehull((1.0, 2.5), hf) != collinear    # left edge, between (1,2) and (1,3)
+    end
+end
+
+@testset "insidehull collinear: interior hull vertices always inside" begin
+    # Hull vertices that are not on vertical extreme edges previously returned false
+    # with collinear=true.  All hull vertices must return true regardless of collinear.
+    pts = [(0.0,1.0), (2.0,0.0), (4.0,1.0), (3.0,3.0), (1.0,3.0)]
+    for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull,
+              ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
         for collinear in (false, true)
-            @testset "$H collinear=$collinear" begin
-                h = H{eltype(coords)}(; orientation=CCW, collinear)
-                mergepoints!(h, coords)
-                @test all((q in h) == insidehull(q, h) for q in queries)
-                @test all((q ∈ h) == insidehull(q, h) for q in queries)
+            h = H{eltype(pts)}(; collinear)
+            for p in pts; addpoint!(h, p); end
+            for v in collect(h)
+                @test insidehull(v, h)
             end
         end
-    end
-    # The full hull of the 1:5 grid is the 1..5 square. Strictly interior points
-    # are inside and exterior points are outside regardless of `collinear`; with
-    # the default `collinear=false`, boundary points (edges and corners) are inside.
-    @testset "interior / exterior" begin
-        for collinear in (false, true)
-            h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear)
-            mergepoints!(h, coords)
-            @test (3, 3) in h        # strictly interior
-            @test !((10, 10) in h)   # exterior
-        end
-        h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear=false)
-        mergepoints!(h, coords)
-        @test (1, 1) in h            # corner, boundary-inclusive when collinear=false
-        @test (1, 3) in h            # edge
     end
 end
 
