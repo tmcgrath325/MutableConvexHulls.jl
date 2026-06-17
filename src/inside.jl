@@ -10,6 +10,9 @@ const UpperHull{T} = Union{MutableUpperConvexHull{T}, ChanUpperConvexHull{T}}
 
 Return `true` if `data` lies inside `hull` and `false` otherwise.
 
+`data` must be a 2-D indexable point, supporting `data[1]` and `data[2]`; a
+scalar or other non-indexable value raises a `BoundsError`.
+
 Boundary handling is governed by `hull.collinear`. With the default
 `collinear=false`, points on an edge or vertex of `hull` count as inside.
 

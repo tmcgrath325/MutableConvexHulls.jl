@@ -125,7 +125,7 @@ struct HullNodeIterator{S<:HullNode}
     rev::Bool
 end
 """
-    HullNodeIterator(start [, rev])
+    HullNodeIterator(start[; rev=false])
 
 Returns an iterator over the nodes in the linked list representing the convex hull, starting at the specified node `start`.
 
@@ -137,7 +137,7 @@ function HullNodeIterator(start::S; rev::Bool = false) where {S<:HullNode}
 end
 
 """
-    HullNodeIterator(hull [, rev])
+    HullNodeIterator(hull[; rev=false])
 
 Returns an iterator over the nodes in the linked list representing the convex hull.
 
@@ -159,7 +159,7 @@ struct PointNodeIterator{S<:PointNode}
     rev::Bool
 end
 """
-    PointNodeIterator(start [, rev])
+    PointNodeIterator(start[; rev=false])
 
 Returns an iterator over the nodes in the linked list representing the points contained by the convex hull,
 starting at the specified node `start`.
@@ -172,7 +172,7 @@ function PointNodeIterator(start::S; rev::Bool = false) where S
 end
 
 """
-    PointNodeIterator(hull [, rev])
+    PointNodeIterator(hull[; rev=false])
 
 Returns an iterator over the nodes in the linked list representing the points contained by the convex hull.
 
