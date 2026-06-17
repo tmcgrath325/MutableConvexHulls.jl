@@ -90,4 +90,16 @@
             @test collect(h.hull) == collect(MCH.jarvismarch!(h).hull)
         end
     end
+
+    @testset "Matrix input" begin
+        m = [p[k] for p in boxcoords, k in 1:2]
+        @test lower_jarvismarch(m) == lower_jarvismarch(boxcoords)
+        @test upper_jarvismarch(m) == upper_jarvismarch(boxcoords)
+        @test jarvismarch(m)       == jarvismarch(boxcoords)
+
+        # configuration keywords are forwarded through the matrix form
+        @test collect(jarvismarch(m; orientation=CW).hull) == collect(jarvismarch(boxcoords; orientation=CW).hull)
+        @test collect(lower_jarvismarch(m; collinear=true).hull) == collect(lower_jarvismarch(boxcoords; collinear=true).hull)
+        @test collect(upper_jarvismarch(m; sortedby=by).hull) == collect(upper_jarvismarch(boxcoords; sortedby=by).hull)
+    end
 end

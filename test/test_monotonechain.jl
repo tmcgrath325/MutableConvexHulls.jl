@@ -78,5 +78,10 @@
         @test lower_monotonechain(m) == lower_monotonechain(boxcoords)
         @test upper_monotonechain(m) == upper_monotonechain(boxcoords)
         @test monotonechain(m)       == monotonechain(boxcoords)
+
+        # configuration keywords are forwarded through the matrix form
+        @test collect(monotonechain(m; orientation=CW).hull) == collect(monotonechain(boxcoords; orientation=CW).hull)
+        @test collect(lower_monotonechain(m; collinear=true).hull) == collect(lower_monotonechain(boxcoords; collinear=true).hull)
+        @test collect(upper_monotonechain(m; sortedby=by).hull) == collect(upper_monotonechain(boxcoords; sortedby=by).hull)
     end
 end

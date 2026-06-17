@@ -234,6 +234,8 @@ end
 
 Return the lower convex hull generated from the provided `points`.
 
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
+
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
 `collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
@@ -251,12 +253,14 @@ function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
     monotonechain!(h)
     return h
 end
-lower_monotonechain(points::Matrix; kwargs...) = lower_monotonechain([(points[i,:]...,) for i=1:size(points,1)])
+lower_monotonechain(points::AbstractMatrix; kwargs...) = lower_monotonechain(rowpoints(points); kwargs...)
 
 """
     uh = upper_monotonechain(points [; orientation, collinear, sortedby])
 
 Return the upper convex hull generated from the provided `points`.
+
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -275,12 +279,14 @@ function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrienta
     monotonechain!(h)
     return h
 end
-upper_monotonechain(points::Matrix; kwargs...) = upper_monotonechain([(points[i,:]...,) for i=1:size(points,1)])
+upper_monotonechain(points::AbstractMatrix; kwargs...) = upper_monotonechain(rowpoints(points); kwargs...)
 
 """
     h = monotonechain(points [; orientation, collinear, sortedby])
 
 Return the convex hull generated from the provided `points`.
+
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -299,4 +305,4 @@ function monotonechain(points::AbstractVector{T}; orientation::HullOrientation =
     monotonechain!(h)
     return h
 end
-monotonechain(points::Matrix; kwargs...) = monotonechain([(points[i,:]...,) for i=1:size(points,1)])
+monotonechain(points::AbstractMatrix; kwargs...) = monotonechain(rowpoints(points); kwargs...)

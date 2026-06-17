@@ -220,6 +220,8 @@ end
 Add `points` to the list of points contained by the provided convex hull `hull`. If any of the `points` lie outside the convex hull,
 the list of hull points will be updated accordingly.
 
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
+
 This function finds the convex hull of the `points` to be added before merging them with the `hull`. See 
 [Chan's algorithm](https://en.wikipedia.org/wiki/Chan%27s_algorithm) for a similar idea.
 
@@ -240,7 +242,7 @@ function mergepoints!(h::MutableUpperConvexHull{T}, points::AbstractVector{T}) w
     mergehulls!(h,h2)
     return h
 end
-mergepoints!(h::AbstractConvexHull, points::Matrix) = mergepoints!(h, [(points[i,:]...,) for i=1:size(points,1)])
+mergepoints!(h::AbstractConvexHull, points::AbstractMatrix) = mergepoints!(h, rowpoints(points))
 
 """
     removepoint!(hull, node)

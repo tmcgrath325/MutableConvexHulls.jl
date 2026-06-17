@@ -165,6 +165,8 @@ end
 
 Return the convex hull generated from the provided `points`.
 
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
+
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
 `collinear` specifies whether collinear points are allowed along the surface of the convex hull, and defaults to `false`.
@@ -180,11 +182,14 @@ function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW
     jarvismarch!(h)
     return h
 end
+jarvismarch(points::AbstractMatrix; kwargs...) = jarvismarch(rowpoints(points); kwargs...)
 
 """
     lh = lower_jarvismarch(points [; orientation, collinear, sortedby])
 
 Return the lower convex hull generated from the provided `points`.
+
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -201,11 +206,14 @@ function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientati
     jarvismarch!(h)
     return h
 end
+lower_jarvismarch(points::AbstractMatrix; kwargs...) = lower_jarvismarch(rowpoints(points); kwargs...)
 
 """
     uh = upper_jarvismarch(points [; orientation, collinear, sortedby])
 
 Return the upper convex hull generated from the provided `points`.
+
+`points` may be a vector of points or an `AbstractMatrix` in which each row is one point.
 
 `orientation` specifies whether the points along the convex hull are ordered clockwise `CW`, or counterclockwise `CCW`, and defaults to `CCW`.
 
@@ -222,3 +230,4 @@ function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientati
     jarvismarch!(h)
     return h
 end
+upper_jarvismarch(points::AbstractMatrix; kwargs...) = upper_jarvismarch(rowpoints(points); kwargs...)
