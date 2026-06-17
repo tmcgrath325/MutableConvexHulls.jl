@@ -2,6 +2,7 @@ using MutableConvexHulls
 using PairedLinkedLists
 using Test
 using Random
+using Logging
 using Aqua
 using ExplicitImports
 const MCH = MutableConvexHulls

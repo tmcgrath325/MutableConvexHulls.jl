@@ -102,6 +102,22 @@ end
             @test_throws MethodError mergehulls(h, h)
         end
     end
+
+    @testset "merge_hull_lists! emits no fallback warning" begin
+        # The optimized merge path must never silently fall back on valid input.
+        pts_a = [(Float64(i), Float64(j)) for i in 1:5 for j in 1:5]
+        pts_b = [(Float64(i), Float64(j)) for i in 6:10 for j in 1:5]
+        for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
+            a = H{eltype(pts_a)}(); mergepoints!(a, pts_a)
+            b = H{eltype(pts_b)}(); mergepoints!(b, pts_b)
+            @test_logs min_level=Logging.Warn mergehulls!(copy(a), copy(b))
+        end
+        for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
+            h = H{Tuple{Float64,Float64}}()
+            mergepoints!(h, [pts_a..., pts_b...])
+            @test_logs min_level=Logging.Warn mergepoints!(h, [(11.0, Float64(j)) for j in 1:5])
+        end
+    end
 end
 
 @testset "constructor keyword API" begin
