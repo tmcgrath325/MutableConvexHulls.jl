@@ -1,4 +1,4 @@
-function jarvissearch(query::AbstractNode{T}, prevedge, pointsnodes, betterturn::Function) where T
+function jarvissearch(query::AbstractNode{T}, prevedge, pointsnodes, betterturn::Function) where {T}
     # isempty(pointsnodes) && throw(ArgumentError("At least 1 point must be provided."))
     firstpoint, iter = Iterators.peel(pointsnodes)
     isempty(iter) && return firstpoint
@@ -23,7 +23,7 @@ Determine the convex hull of the points contained in the provided `hull.points` 
 Each node in the list should contain a two-dimensional point, and the nodes are assumed to be sorted 
 (e.g. by lowest "x" value and by lowest "y" in case of ties, though some other sorting methods may produce valid results).
 """
-function jarvismarch!(hull::Union{AbstractConvexHull{T},AbstractList{T}}, pointslist, collinear, orientation, initedge, stop::Union{PointNode{T},HullNode{T},Nothing}=nothing) where T
+function jarvismarch!(hull::Union{AbstractConvexHull{T}, AbstractList{T}}, pointslist, collinear, orientation, initedge, stop::Union{PointNode{T}, HullNode{T}, Nothing} = nothing) where {T}
     length(hull) > 0 || throw(ArgumentError("jarvismarch! requires a hull containing at least one point"))
     if isnothing(stop)
         stop = head(hull)
@@ -31,9 +31,9 @@ function jarvismarch!(hull::Union{AbstractConvexHull{T},AbstractList{T}}, points
     stopdata = stop.data
 
     # use the appropriate check for determining a better option for the next point
-    betterturn(prevedge,o,a,b) = collinear ? iscloserturn(!orientation,prevedge,o,a,b) : isfurtherturn(!orientation,prevedge,o,a,b)
+    betterturn(prevedge, o, a, b) = collinear ? iscloserturn(!orientation, prevedge, o, a, b) : isfurtherturn(!orientation, prevedge, o, a, b)
 
-    # perform jarvis march 
+    # perform jarvis march
     counter = 0
     current = head(hull).target
     prevedge = initedge
@@ -60,7 +60,7 @@ function jarvismarch!(hull::Union{AbstractConvexHull{T},AbstractList{T}}, points
     end
 
     if length(hull) > 1
-        if coordsareequal(head(hull).data, tail(hull).data) 
+        if coordsareequal(head(hull).data, tail(hull).data)
             deletenode!(tail(hull))
         end
     end
@@ -73,7 +73,7 @@ function jarvismarch!(h::MutableConvexHull)
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    if length(h.hull.target) == 1 
+    if length(h.hull.target) == 1
         push!(h.hull, first(h.hull.target))
         addtarget!(head(h.hull), head(h.hull.target))
     end
@@ -98,7 +98,7 @@ function jarvismarch!(h::MutableLowerConvexHull)
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    if length(h.hull.target) == 1 
+    if length(h.hull.target) == 1
         push!(h.hull, first(h.hull.target))
         addtarget!(head(h.hull), head(h.hull.target))
     end
@@ -131,7 +131,7 @@ function jarvismarch!(h::MutableUpperConvexHull)
     empty!(h.hull) # TODO: can we avoid starting over?
 
     # handle the 0- and 1-point cases
-    if length(h.hull.target) == 1 
+    if length(h.hull.target) == 1
         push!(h.hull, first(h.hull.target))
         addtarget!(head(h.hull), head(h.hull.target))
     end
@@ -172,11 +172,13 @@ Return a [`MutableConvexHull`](@ref) containing the convex hull of the provided 
 
 `sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
 """
-function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
-    pointslist = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,typeof(sortedby)}()
+function jarvismarch(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where {T}
+    pointslist = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    for p in points; push!(pointslist, p); end
+    for p in points
+        push!(pointslist, p)
+    end
     h = MutableConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
@@ -196,11 +198,13 @@ Return a [`MutableLowerConvexHull`](@ref) containing the lower convex hull of th
 
 `sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
 """
-function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
-    pointslist = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,typeof(sortedby)}()
+function lower_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where {T}
+    pointslist = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    for p in points; push!(pointslist, p); end
+    for p in points
+        push!(pointslist, p)
+    end
     h = MutableLowerConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h
@@ -220,11 +224,13 @@ Return a [`MutableUpperConvexHull`](@ref) containing the upper convex hull of th
 
 `sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
 """
-function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation=CCW, collinear::Bool=false, sortedby::Function=identity) where T
-    pointslist = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,typeof(sortedby)}()
+function upper_jarvismarch(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where {T}
+    pointslist = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, typeof(sortedby)}()
     addtarget!(hull, pointslist)
-    for p in points; push!(pointslist, p); end
+    for p in points
+        push!(pointslist, p)
+    end
     h = MutableUpperConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     jarvismarch!(h)
     return h

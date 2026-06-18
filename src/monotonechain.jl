@@ -4,7 +4,7 @@
 Get the first point on `h.points` that should be considered for the monotone chain algorithm.
 """
 firstpoint(h::Union{MutableConvexHull, MutableLowerConvexHull}) = h.orientation === CCW ? h.points.head.next : h.points.tail.prev
-firstpoint(h::MutableUpperConvexHull) =  h.orientation === CCW ? h.points.tail.prev : h.points.head.next
+firstpoint(h::MutableUpperConvexHull) = h.orientation === CCW ? h.points.tail.prev : h.points.head.next
 
 """ 
     node = lastpoint(h)
@@ -32,22 +32,24 @@ Each node in the list should contain a two-dimensional point, and the nodes are 
 `start` and `stop` should be nodes contained in `hull.points`. If `start` and/or `stop` are provided, the convex hull will only be updated on the inclusive interval
 between `start` and `stop`. This allows efficient removal of points from a convex hull.
 """
-function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull},
-                        start::PointNode{T} = firstpoint(h),
-                        stop::PointNode{T} = lastpoint(h)) where T
+function monotonechain!(
+        h::Union{MutableLowerConvexHull, MutableUpperConvexHull},
+        start::PointNode{T} = firstpoint(h),
+        stop::PointNode{T} = lastpoint(h)
+    ) where {T}
     if isempty(h.points)
         empty!(h.hull)
         return h
     end
     start.list === stop.list === h.points || throw(ArgumentError("The start and stop nodes do not belong to the appropriate list."))
     # exclude or include collinear points on the hull
-    wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
+    wrongturn(o, a, b) = h.collinear ? !isorientedturn(h.orientation, o, a, b) : !isshorterturn(h.orientation, o, a, b)
     # get a list of point nodes to be added to the hull
     nodestoadd = PointNode{T}[]
     start === firstpoint(h) && push!(nodestoadd, start)
     lastdata = start.data
     penultimatedata = lastdata
-    for node in ListNodeIterator(start; rev=buildinreverse(h))
+    for node in ListNodeIterator(start; rev = buildinreverse(h))
         nodedata = node.data
         if !isempty(nodestoadd) && nodestoadd[end] !== node
             while length(nodestoadd) >= 2 # && wrongturn(nodestoadd[end-1].data, nodestoadd[end].data, node.data)
@@ -57,7 +59,7 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
                     pop!(nodestoadd)
                     lastdata = penultimatedata
                     if (length(nodestoadd) > 1)
-                        penultimatedata = nodestoadd[end-1].data
+                        penultimatedata = nodestoadd[end - 1].data
                     end
                 else
                     break
@@ -68,7 +70,7 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
         penultimatedata = lastdata
         lastdata = nodedata
         if node === stop
-            if length(nodestoadd) >= 2 && coordsareequal(nodestoadd[end-1].data, stop.data)
+            if length(nodestoadd) >= 2 && coordsareequal(nodestoadd[end - 1].data, stop.data)
                 removednode = nodestoadd[end]
                 hastarget(removednode) && deletenode!(removednode.target)
                 pop!(nodestoadd)
@@ -91,9 +93,11 @@ function monotonechain!(h::Union{MutableLowerConvexHull, MutableUpperConvexHull}
 end
 
 # TO DO: implement use of start and stop arguments, and avoid unecessary node constructor calls
-function monotonechain!(h::MutableConvexHull{T},
-                        start::PointNode{T} = firstpoint(h),
-                        stop::PointNode{T} = lastpoint(h)) where T
+function monotonechain!(
+        h::MutableConvexHull{T},
+        start::PointNode{T} = firstpoint(h),
+        stop::PointNode{T} = lastpoint(h)
+    ) where {T}
     if isempty(h.points)
         empty!(h.hull)
         return h
@@ -104,20 +108,20 @@ function monotonechain!(h::MutableConvexHull{T},
         return h
     end
     # remove extreme points from the hull (allows them to switch ends in the case of certain deletions)
-    length(h) > 0 && deletenode!(head(h.hull))    
-    length(h) > 0 && deletenode!(tail(h.hull))    
+    length(h) > 0 && deletenode!(head(h.hull))
+    length(h) > 0 && deletenode!(tail(h.hull))
     # exclude or include collinear points on the hull
-    wrongturn(o,a,b) = h.collinear ? !isorientedturn(h.orientation,o,a,b) : !isshorterturn(h.orientation,o,a,b)
+    wrongturn(o, a, b) = h.collinear ? !isorientedturn(h.orientation, o, a, b) : !isshorterturn(h.orientation, o, a, b)
     # obtain the lower convex hull, and keep track of duplicate coordinates
     lowerhullidxs = Int[]
     lowerhulldups = Bool[]
     hullnode = h.hull.head
     len = 0
-    for (i,node) in enumerate(ListNodeIterator(h.points; rev=buildinreverse(h)))
+    for (i, node) in enumerate(ListNodeIterator(h.points; rev = buildinreverse(h)))
         o = len == 1 ? hullnode.data : hullnode.prev.data
         a = hullnode.data
         b = node.data
-        if i > 1 && coordsareequal(a,b)
+        if i > 1 && coordsareequal(a, b)
             push!(lowerhullidxs, i)
             push!(lowerhulldups, true)
             if hastarget(node)
@@ -126,7 +130,7 @@ function monotonechain!(h::MutableConvexHull{T},
             continue
         end
         while len >= 2 && wrongturn(o, a, b)
-            while(lowerhulldups[end])
+            while (lowerhulldups[end])
                 pop!(lowerhulldups)
                 pop!(lowerhullidxs)
             end
@@ -145,7 +149,7 @@ function monotonechain!(h::MutableConvexHull{T},
         else
             if node.target === hullnode.next
                 hullnode = hullnode.next
-            else 
+            else
                 movednode = deletenode!(node.target)
                 insertafter!(movednode, hullnode)
                 addtarget!(movednode, node)
@@ -159,7 +163,7 @@ function monotonechain!(h::MutableConvexHull{T},
 
     lidx = length(lowerhullidxs)
     len = 1
-    for (i,node) in enumerate(ListNodeIterator(h.points; rev=(h.orientation===CCW)))
+    for (i, node) in enumerate(ListNodeIterator(h.points; rev = (h.orientation === CCW)))
         o = len == 1 ? hullnode.data : hullnode.prev.data
         a = hullnode.data
         b = node.data
@@ -168,8 +172,8 @@ function monotonechain!(h::MutableConvexHull{T},
             if node.target.prev !== hullnode
                 continue
             end
-        end 
-        if coordsareequal(a,b)
+        end
+        if coordsareequal(a, b)
             if hastarget(node)
                 deletenode!(node.target)
             end
@@ -218,12 +222,12 @@ Return a [`MutableLowerConvexHull`](@ref) containing the lower convex hull of th
 
 `sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
 """
-function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
-    pointslist = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,typeof(sortedby)}()
+function lower_monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where {T}
+    pointslist = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, typeof(sortedby)}()
     addtarget!(hull, pointslist)
     for p in points
-        push!(pointslist,p)
+        push!(pointslist, p)
     end
     h = MutableLowerConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     monotonechain!(h)
@@ -244,12 +248,12 @@ Return a [`MutableUpperConvexHull`](@ref) containing the upper convex hull of th
 
 `sortedby` specifies a function to apply to points prior to sorting, and defaults to `identity` (resulting in default sorting behavior).
 """
-function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
-    pointslist = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,typeof(sortedby)}()
+function upper_monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where {T}
+    pointslist = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, typeof(sortedby)}()
     addtarget!(hull, pointslist)
     for p in points
-        push!(pointslist,p)
+        push!(pointslist, p)
     end
     h = MutableUpperConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     monotonechain!(h)
@@ -278,12 +282,12 @@ julia> monotonechain(points)
 MutableConvexHull{Tuple{Float64, Float64}, typeof(identity)}((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
 ```
 """
-function monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where T
-    pointslist = PointList{T}(;sortedby=sortedby)
-    hull = HullList{T,typeof(sortedby)}()
+function monotonechain(points::AbstractVector{T}; orientation::HullOrientation = CCW, collinear::Bool = false, sortedby::Function = identity) where {T}
+    pointslist = PointList{T}(; sortedby = sortedby)
+    hull = HullList{T, typeof(sortedby)}()
     addtarget!(hull, pointslist)
     for p in points
-        push!(pointslist,p)
+        push!(pointslist, p)
     end
     h = MutableConvexHull{T, typeof(sortedby)}(hull, pointslist, orientation, collinear, sortedby)
     monotonechain!(h)

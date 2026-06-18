@@ -8,14 +8,14 @@ module MutableConvexHulls
 
 using DoubleFloats: DoubleFloats, DoubleFloat
 using PairedLinkedLists: PairedLinkedLists,
-                         AbstractNode, AbstractList,
-                         AbstractPairedListNode, AbstractPairedSkipNode,
-                         AbstractPairedLinkedList, AbstractPairedSkipList,
-                         SkipListCache,
-                         ListNodeIterator,
-                         TargetedLinkedList, TargetedListNode,
-                         addtarget!, athead, attail, deletenode!, hastarget,
-                         head, insertafter!, newnode, nodetype, removetarget!, search, tail
+    AbstractNode, AbstractList,
+    AbstractPairedListNode, AbstractPairedSkipNode,
+    AbstractPairedLinkedList, AbstractPairedSkipList,
+    SkipListCache,
+    ListNodeIterator,
+    TargetedLinkedList, TargetedListNode,
+    addtarget!, athead, attail, deletenode!, hastarget,
+    head, insertafter!, newnode, nodetype, removetarget!, search, tail
 
 include("utils.jl")
 include("orientation.jl")

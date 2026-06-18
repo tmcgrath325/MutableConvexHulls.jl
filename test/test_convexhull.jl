@@ -1,32 +1,32 @@
 @testset "convex hulls, unique points" begin
-    boxcoords = [(i,j) for i in 1:10 for j in 1:10]
+    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     by = x -> (x[1], -x[2])
     n = 10
 
     hulltestset("lower convex hull", n, by, boxcoords, MutableLowerConvexHull, lower_jarvismarch)
     hulltestset("upper convex hull", n, by, boxcoords, MutableUpperConvexHull, upper_jarvismarch)
-    hulltestset("convex hull",       n, by, boxcoords, MutableConvexHull,      jarvismarch)
+    hulltestset("convex hull", n, by, boxcoords, MutableConvexHull, jarvismarch)
 end
 
 @testset "convex hulls, duplicate points" begin
-    boxcoords = [(i,j) for i in 1:10 for j in 1:10]
+    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     boxcoords = [boxcoords..., boxcoords..., boxcoords...]
     by = x -> (x[1], -x[2])
     n = 10
 
     hulltestset("lower convex hull", n, by, boxcoords, MutableLowerConvexHull, lower_jarvismarch)
     hulltestset("upper convex hull", n, by, boxcoords, MutableUpperConvexHull, upper_jarvismarch)
-    hulltestset("convex hull",       n, by, boxcoords, MutableConvexHull,      jarvismarch)
+    hulltestset("convex hull", n, by, boxcoords, MutableConvexHull, jarvismarch)
 end
 
 @testset "convex hulls, random data with duplicates" begin
-    coords = [(randn(),randn()) for i in 1:10 for j in 1:10]
+    coords = [(randn(), randn()) for i in 1:10 for j in 1:10]
     by = x -> (x[1], -x[2])
     n = 10
 
     hulltestset("lower convex hull", n, by, coords, MutableLowerConvexHull, lower_jarvismarch)
     hulltestset("upper convex hull", n, by, coords, MutableUpperConvexHull, upper_jarvismarch)
-    hulltestset("convex hull",       n, by, coords, MutableConvexHull,      jarvismarch)
+    hulltestset("convex hull", n, by, coords, MutableConvexHull, jarvismarch)
 end
 @testset "hash, copy, and mergehulls" begin
     coords = [(randn(), randn()) for _ in 1:50]
@@ -73,12 +73,12 @@ end
 
     # mergehulls returns the merged hull without mutating its arguments
     @testset "mergehulls is non-mutating" begin
-        a = MutableConvexHull{Tuple{Float64,Float64}}()
-        b = MutableConvexHull{Tuple{Float64,Float64}}()
-        for p in [(0.0,0.0),(1.0,0.0),(1.0,1.0),(0.0,1.0)]
+        a = MutableConvexHull{Tuple{Float64, Float64}}()
+        b = MutableConvexHull{Tuple{Float64, Float64}}()
+        for p in [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
             addpoint!(a, p)
         end
-        for p in [(2.0,2.0),(3.0,2.0),(3.0,3.0),(2.0,3.0)]
+        for p in [(2.0, 2.0), (3.0, 2.0), (3.0, 3.0), (2.0, 3.0)]
             addpoint!(b, p)
         end
         averts = collect(a)
@@ -95,7 +95,7 @@ end
     @testset "mergehulls! rejects Chan hulls" begin
         # Chan hulls lack a .points field; they must not silently crash with a
         # field-access error — the caller should get a MethodError instead.
-        T = Tuple{Float64,Float64}
+        T = Tuple{Float64, Float64}
         for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
             h = H{T}()
             @test_throws MethodError mergehulls!(h, h)
@@ -110,26 +110,26 @@ end
         for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
             a = H{eltype(pts_a)}(); mergepoints!(a, pts_a)
             b = H{eltype(pts_b)}(); mergepoints!(b, pts_b)
-            @test_logs min_level=Logging.Warn mergehulls!(copy(a), copy(b))
+            @test_logs min_level = Logging.Warn mergehulls!(copy(a), copy(b))
         end
         for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
-            h = H{Tuple{Float64,Float64}}()
+            h = H{Tuple{Float64, Float64}}()
             mergepoints!(h, [pts_a..., pts_b...])
-            @test_logs min_level=Logging.Warn mergepoints!(h, [(11.0, Float64(j)) for j in 1:5])
+            @test_logs min_level = Logging.Warn mergepoints!(h, [(11.0, Float64(j)) for j in 1:5])
         end
     end
 end
 
 @testset "constructor keyword API" begin
     # All configuration arguments are keyword-only; positional calls now throw.
-    T = Tuple{Float64,Float64}
+    T = Tuple{Float64, Float64}
     by = x -> x[1]
     for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull)
         # Defaults
         h = H{T}()
         @test h.orientation === CCW && h.collinear === false && h.sortedby === identity
         # All keywords explicit
-        h2 = H{T}(; orientation=CW, collinear=true, sortedby=by)
+        h2 = H{T}(; orientation = CW, collinear = true, sortedby = by)
         @test h2.orientation === CW && h2.collinear === true && h2.sortedby === by
         # Positional call now throws
         @test_throws MethodError H{T}(CCW, false, identity)
@@ -137,7 +137,7 @@ end
     for H in (ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
         h = H{T}()
         @test h.orientation === CCW && h.collinear === false && h.sortedby === identity
-        h2 = H{T}(; orientation=CW, collinear=true, sortedby=by)
+        h2 = H{T}(; orientation = CW, collinear = true, sortedby = by)
         @test h2.orientation === CW && h2.collinear === true && h2.sortedby === by
         @test_throws MethodError H{T}(CCW, false, identity)
     end
@@ -146,9 +146,11 @@ end
 @testset "removepoint! by value" begin
     boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     coords = [boxcoords..., boxcoords...]   # include duplicate points
-    for (H, truthfun) in ((MutableLowerConvexHull, lower_jarvismarch),
-                          (MutableUpperConvexHull, upper_jarvismarch),
-                          (MutableConvexHull, jarvismarch))
+    for (H, truthfun) in (
+            (MutableLowerConvexHull, lower_jarvismarch),
+            (MutableUpperConvexHull, upper_jarvismarch),
+            (MutableConvexHull, jarvismarch),
+        )
         @testset "$H" begin
             remaining = shuffle(coords)
             h = H{eltype(coords)}()
@@ -198,9 +200,11 @@ end
 
 @testset "removepoint! by HullNode" begin
     coords = [(i, j) for i in 1:5 for j in 1:5]
-    for (H, truthfun) in ((MutableLowerConvexHull, lower_jarvismarch),
-                          (MutableUpperConvexHull, upper_jarvismarch),
-                          (MutableConvexHull,      jarvismarch))
+    for (H, truthfun) in (
+            (MutableLowerConvexHull, lower_jarvismarch),
+            (MutableUpperConvexHull, upper_jarvismarch),
+            (MutableConvexHull, jarvismarch),
+        )
         @testset "$H" begin
             h = H{eltype(coords)}()
             mergepoints!(h, coords)
@@ -236,7 +240,7 @@ end
     coords = [(i, j) for i in 1:5 for j in 1:5]
     for collinear in (false, true)
         @testset "collinear=$collinear" begin
-            h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear)
+            h = MutableConvexHull{eltype(coords)}(; orientation = CCW, collinear)
             mergepoints!(h, coords)
             # Strictly interior and exterior points are unaffected by the collinear flag.
             @test insidehull((3, 3), h) == true
@@ -253,7 +257,7 @@ end
     # With collinear=false the hull is the 4-corner square; with collinear=true it
     # includes all collinear boundary grid points as explicit vertices.
     for collinear in (false, true)
-        h = MutableConvexHull{eltype(coords)}(; orientation=CCW, collinear)
+        h = MutableConvexHull{eltype(coords)}(; orientation = CCW, collinear)
         mergepoints!(h, coords)
         @test insidehull((3, 3), h)                 # strictly interior
         @test !insidehull((10, 10), h)              # exterior
@@ -267,7 +271,7 @@ end
     # outside when collinear=true.
     fcoords = [(Float64(i), Float64(j)) for i in 1:5 for j in 1:5]
     for collinear in (false, true)
-        hf = MutableConvexHull{eltype(fcoords)}(; orientation=CCW, collinear)
+        hf = MutableConvexHull{eltype(fcoords)}(; orientation = CCW, collinear)
         mergepoints!(hf, fcoords)
         @test insidehull((1.0, 2.5), hf) != collinear    # left edge, between (1,2) and (1,3)
     end
@@ -276,12 +280,16 @@ end
 @testset "insidehull collinear: interior hull vertices always inside" begin
     # Hull vertices that are not on vertical extreme edges previously returned false
     # with collinear=true.  All hull vertices must return true regardless of collinear.
-    pts = [(0.0,1.0), (2.0,0.0), (4.0,1.0), (3.0,3.0), (1.0,3.0)]
-    for H in (MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull,
-              ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull)
+    pts = [(0.0, 1.0), (2.0, 0.0), (4.0, 1.0), (3.0, 3.0), (1.0, 3.0)]
+    for H in (
+            MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull,
+            ChanConvexHull, ChanLowerConvexHull, ChanUpperConvexHull,
+        )
         for collinear in (false, true)
             h = H{eltype(pts)}(; collinear)
-            for p in pts; addpoint!(h, p); end
+            for p in pts
+                addpoint!(h, p)
+            end
             for v in collect(h)
                 @test insidehull(v, h)
             end
@@ -294,16 +302,18 @@ end
     # findpointnode must scan back past one to locate the other.
     sb = x -> x[1]
     pts = [(0, 1), (2, 1), (1, 0), (1, 2)]
-    for (H, truthfun) in ((MutableConvexHull,      jarvismarch),
-                          (MutableLowerConvexHull,  lower_jarvismarch),
-                          (MutableUpperConvexHull,  upper_jarvismarch))
+    for (H, truthfun) in (
+            (MutableConvexHull, jarvismarch),
+            (MutableLowerConvexHull, lower_jarvismarch),
+            (MutableUpperConvexHull, upper_jarvismarch),
+        )
         @testset "$H" begin
-            h = H{eltype(pts), typeof(sb)}(; orientation=CCW, collinear=false, sortedby=sb)
+            h = H{eltype(pts), typeof(sb)}(; orientation = CCW, collinear = false, sortedby = sb)
             for p in pts
                 addpoint!(h, p)
             end
             removepoint!(h, (1, 0))
-            @test h == truthfun(filter(!=((1, 0)), pts); sortedby=sb)
+            @test h == truthfun(filter(!=((1, 0)), pts); sortedby = sb)
         end
     end
 end
