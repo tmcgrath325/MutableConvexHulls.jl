@@ -2,36 +2,49 @@
 # sorted order of the hull list. It is not currently used (jarvissearch is used instead)
 # but is retained as a reference for future optimization work.
 #
-# function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
-#     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
-#     pointslist.len == 1 && return head(pointslist)
-#     coordsareequal(head(pointslist).data, tail(pointslist).data) && throw(ArgumentError("All points in the list are duplicates."))
-#     # find nodes around the start of the list that are distinct from the query data
-#     prevnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=true))
-#     prevnode === nothing && return head(pointslist)
-#     currentnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=false))
-#     currentnode === prevnode && return currentnode
-#     nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-#     if nextnode === nothing
-#         return betterturn(prevedge, query.data, prevnode.data, currentnode.data) ? currentnode : prevnode
-#     end
-#     # initialize comparision with previous node
-#     prev_worse = !betterturn(prevedge, query.data, currentnode.data, prevnode.data)
+# Precondition: pointslist must be a strictly-convex partial (lower or upper) hull list,
+# i.e. built with collinear=false. For such lists, the betterturn quality function is
+# unimodal over the sorted vertices: it rises to a single peak then falls. This function
+# exploits that unimodality to exit early once both the predecessor and successor are
+# worse than the current node, avoiding a full scan of the list.
 #
-#     while nextnode !== nothing
-#         # since points are sorted, the next point should present a "better turn" than the preceding or following points
-#         next_worse = !betterturn(prevedge, query.data, currentnode.data, nextnode.data)
-#         if prev_worse && next_worse
-#             return currentnode
-#         end
-#         prev_worse = !next_worse
-#         prevnode = currentnode
-#         currentnode = nextnode
-#         nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-#     end
-#     return currentnode
-# end
+# The unimodality assumption fails for collinear=true hull lists (many collinear points
+# make the quality non-monotone) and for full convex hull lists (the circular structure
+# and non-transitivity of betterturn can produce cyclic comparisons).
+function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
+    length(pointslist) == 0 && throw(ArgumentError("The list of points must not be empty."))
+    length(pointslist) == 1 && return head(pointslist)
+    # Find the first and last nodes with coordinates distinct from the query.
+    # prevnode (from the tail) provides the circular-boundary comparison for the head.
+    prevnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=true))
+    prevnode === nothing && return head(pointslist)
+    currentnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=false))
+    currentnode === prevnode && return currentnode
+    # Comparing currentnode (head) against prevnode (tail) handles the wrap-around case:
+    # if the peak of the unimodal function sits at the very start of the list, both the
+    # tail (prev) and the second node (next) will be worse, and we return immediately.
+    prev_worse = !betterturn(prevedge, query.data, currentnode.data, prevnode.data)
+    nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
+    while nextnode !== nothing
+        next_worse = !betterturn(prevedge, query.data, currentnode.data, nextnode.data)
+        if prev_worse && next_worse
+            return currentnode
+        end
+        prev_worse = !next_worse
+        prevnode = currentnode
+        currentnode = nextnode
+        nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
+    end
+    return currentnode
+end
 
+# Dispatch to jarvissortedsearch when the hull list is a strictly-convex partial (lower
+# or upper) hull built with collinear=false; fall back to jarvissearch otherwise.
+function hulllistsearch(query, prevedge, htarget::AbstractLinkedList, betterturn, partial::Bool, collinear::Bool)
+    partial && !collinear ?
+        jarvissortedsearch(query, prevedge, htarget, betterturn) :
+        jarvissearch(query, prevedge, ListNodeIterator(htarget), betterturn)
+end
 
 """
     mergehulls!(hull, otherhulls...)
@@ -138,12 +151,7 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
         end
         counter += 1
         for (i, ht) in enumerate(hulltargets)
-            # candidates[i] = (current.list === ht &&                                 # If the current point belongs to the list being considered, we already know
-            #                  !(!collinear && targetscollinear[i])) ?                # its candidate point as long as it doesn't contain extraneous collinear points.
-            #     (attail(current.next) ? head(ht) : current.next) :                  # TODO: Ambiguous direction (when a subhull is entirely collinear) can cause issues
-            #     jarvissortedsearch(current, prevedge, ht, betterturn)
-            # candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
-            candidates[i] = jarvissearch(current, prevedge, ListNodeIterator(ht), betterturn)
+            candidates[i] = hulllistsearch(current, prevedge, ht, betterturn, partial, targetscollinear[i])
         end
         next = jarvissearch(current, prevedge, candidates, betterturn)
         if coordsareequal(current.data, next.data)

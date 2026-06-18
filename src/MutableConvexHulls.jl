@@ -8,7 +8,7 @@ module MutableConvexHulls
 
 using DoubleFloats: DoubleFloats, DoubleFloat
 using PairedLinkedLists: PairedLinkedLists,
-    AbstractNode, AbstractList,
+    AbstractNode, AbstractList, AbstractLinkedList,
     AbstractPairedListNode, AbstractPairedSkipNode,
     AbstractPairedLinkedList, AbstractPairedSkipList,
     SkipListCache,

@@ -123,3 +123,70 @@
         end
     end
 end
+
+@testset "jarvissortedsearch" begin
+    # jarvissortedsearch requires a strictly-convex partial (lower or upper) hull list
+    # built with collinear=false. Only that domain guarantees the unimodality of the
+    # betterturn quality function that the early-exit relies on.
+    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
+    lhalf     = [(i, j) for i in 1:5  for j in 1:10]
+    rhalf     = [(i, j) for i in 6:10 for j in 1:10]
+
+    for orientation in [CCW, CW]
+        bt = let orientation = orientation
+            (pe, o, a, b) -> MCH.isfurtherturn(!orientation, pe, o, a, b)
+        end
+        # Use hull nodes from h1 as queries; search within h2's sorted hull list.
+        for (coords1, coords2) in [(lhalf, rhalf), (rhalf, lhalf), (lhalf, boxcoords), (boxcoords, rhalf)]
+            for H in (MutableLowerConvexHull, MutableUpperConvexHull)
+                h1 = H{eltype(coords1)}(; orientation, collinear = false)
+                h2 = H{eltype(coords2)}(; orientation, collinear = false)
+                mergepoints!(h1, coords1)
+                mergepoints!(h2, coords2)
+                (isempty(h1.hull) || isempty(h2.hull)) && continue
+                for query in ListNodeIterator(h1.hull)
+                    for pe in [MCH.UP, MCH.DOWN, (1.0, 0.0), (-1.0, 0.0)]
+                        ref    = MCH.jarvissearch(query, pe, ListNodeIterator(h2.hull), bt)
+                        result = MCH.jarvissortedsearch(query, pe, h2.hull, bt)
+                        @test MCH.coordsareequal(result.data, ref.data)
+                    end
+                end
+            end
+        end
+    end
+
+    @testset "edge cases" begin
+        T = Tuple{Int, Int}
+        bt_base = (pe, o, a, b) -> MCH.isfurtherturn(!CCW, pe, o, a, b)
+
+        # Build a one-point hull to get a query node; its hull list provides the query.
+        q_hull = MutableLowerConvexHull{T}()
+        addpoint!(q_hull, (0, 0))
+        query = head(q_hull.hull)
+
+        # Empty list throws.
+        @test_throws ArgumentError MCH.jarvissortedsearch(query, MCH.DOWN, MutableLowerConvexHull{T}().hull, bt_base)
+        @test_throws "must not be empty" MCH.jarvissortedsearch(query, MCH.DOWN, MutableLowerConvexHull{T}().hull, bt_base)
+
+        # Single-point list returns that point regardless of query or prevedge.
+        one_hull = MutableLowerConvexHull{T}()
+        addpoint!(one_hull, (5, 3))
+        for pe in [MCH.UP, MCH.DOWN, (1.0, 0.0)]
+            @test MCH.coordsareequal(MCH.jarvissortedsearch(query, pe, one_hull.hull, bt_base).data, (5, 3))
+        end
+
+        # Two-point list: result must match jarvissearch.
+        two_hull = MutableLowerConvexHull{T}()
+        mergepoints!(two_hull, [(2, 0), (8, 0)])
+        for pe in [MCH.UP, MCH.DOWN, (1.0, 0.0), (-1.0, 0.0)]
+            ref    = MCH.jarvissearch(query, pe, ListNodeIterator(two_hull.hull), bt_base)
+            result = MCH.jarvissortedsearch(query, pe, two_hull.hull, bt_base)
+            @test MCH.coordsareequal(result.data, ref.data)
+        end
+
+        # List where all points share the query's coordinates: returns head.
+        dup_hull = MutableLowerConvexHull{T}()
+        addpoint!(dup_hull, (0, 0))  # same coords as query
+        @test MCH.coordsareequal(MCH.jarvissortedsearch(query, MCH.DOWN, dup_hull.hull, bt_base).data, (0, 0))
+    end
+end
