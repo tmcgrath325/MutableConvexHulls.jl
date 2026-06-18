@@ -1,6 +1,6 @@
 name = "MutableConvexHulls"
 uuid = "948c7aac-0e5e-4631-af23-7a6bb7a17825"
-version = "0.4.0"
+version = "0.3.0"
 authors = ["Tom McGrath <tmcgrath325@gmail.com> and contributors"]
 
 [deps]
