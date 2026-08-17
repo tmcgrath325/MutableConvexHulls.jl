@@ -21,3 +21,40 @@
 
     @test chanhull == jarvishull
 end
+
+@testset "mixed-magnitude point sets match exact-arithmetic hulls" begin
+    # strict (collinear = false) hull vertex set computed with exact rational arithmetic
+    function exacthull(points)
+        R = Rational{BigInt}
+        rcross(o, a, b) = (R(a[1]) - R(o[1])) * (R(b[2]) - R(o[2])) - (R(a[2]) - R(o[2])) * (R(b[1]) - R(o[1]))
+        pts = sort(unique(points))
+        length(pts) <= 2 && return Set(pts)
+        function half(ps)
+            h = eltype(ps)[]
+            for p in ps
+                while length(h) >= 2 && rcross(h[end - 1], h[end], p) <= 0
+                    pop!(h)
+                end
+                push!(h, p)
+            end
+            return h
+        end
+        return Set(vcat(half(pts)[1:(end - 1)], half(reverse(pts))[1:(end - 1)]))
+    end
+
+    rng = Random.Xoshiro(0x1e12)
+    hugepts = [(1.0e12 * rand(rng), 1.0e12 * rand(rng)) for _ in 1:100]
+    tinypts = [(1.0e-4 * randn(rng), 1.0e-4 * randn(rng)) for _ in 1:100]
+    hardmix = shuffle!(rng, vcat(hugepts, tinypts))
+    logspread = [(rand(rng, (-1, 1)) * 10.0^(12 * rand(rng)), rand(rng, (-1, 1)) * 10.0^(12 * rand(rng))) for _ in 1:200]
+
+    for points in (hardmix, logspread)
+        expected = exacthull(points)
+        @test Set(collect(monotonechain(points))) == expected
+        incremental = MutableConvexHull{eltype(points)}()
+        for p in points
+            addpoint!(incremental, p)
+        end
+        @test Set(collect(incremental)) == expected
+    end
+end
