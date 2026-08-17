@@ -124,6 +124,13 @@ using MutableConvexHulls: isorientedturn_vec, isalignedturn_vec, iscloserturn_ve
             @test fastturn(CW, (0.0, 0.0), (1.0, 0.0), (1.0, 1.0)) === false
             @test fastturn(CCW, (0.0f0, 0.0f0), (1.0f0, 0.0f0), (1.0f0, 1.0f0)) === true
             @test fastturn(CCW, (0, 0), (1, 0), (1, 1)) === nothing
+            # elements beyond the first two are payload: the fast path still applies
+            @test fastturn(CCW, (0.0, 0.0, "o"), (1.0, 0.0, "a"), (1.0, 1.0, "b")) === true
+            @test fastturn(CW, (0.0, 0.0, nothing), (1.0, 0.0, nothing), (1.0, 1.0, nothing)) === false
+            # mixed Float32/Float64 coordinates certify (Float32 converts exactly)
+            @test fastturn(CCW, (0.0f0, 0.0), (1.0, 0.0f0), (1.0, 1.0)) === true
+            # non-float coordinates fall back even when payload is present
+            @test fastturn(CCW, (0, 0, "o"), (1, 0, "a"), (1, 1, "b")) === nothing
             # exact ties cannot be certified
             @test fastturn(CCW, (0.0, 0.0), (1.0, 1.0), (2.0, 2.0)) === nothing
             # coordinates whose products may be subnormal refuse certification...

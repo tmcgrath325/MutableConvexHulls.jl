@@ -68,13 +68,21 @@ const CROSSERRFACTOR = 8 * eps(Float64)
 # certification is refused.
 const CROSSNORMALFLOOR = 0x1p-1020
 
+# Like `sub2d`/`cross2d`, only elements 1 and 2 of a point are planar
+# coordinates; anything beyond is payload and is ignored, so the fast path
+# applies to payload-carrying points such as `(x, y, data)` tuples.
+fastturn(orientation::HullOrientation, o, a, b) =
+    fastturn(orientation, o[1], o[2], a[1], a[2], b[1], b[2])
+
 # Float32 converts to Float64 exactly, so certification remains valid for the
 # original coordinates.
-function fastturn(orientation::HullOrientation, o::P, a::P, b::P) where {P <: Union{NTuple{2, Float32}, NTuple{2, Float64}}}
-    oax = Float64(a[1]) - Float64(o[1])
-    oay = Float64(a[2]) - Float64(o[2])
-    abx = Float64(b[1]) - Float64(a[1])
-    aby = Float64(b[2]) - Float64(a[2])
+const FastCoord = Union{Float32, Float64}
+function fastturn(orientation::HullOrientation, ox::FastCoord, oy::FastCoord,
+                  ax::FastCoord, ay::FastCoord, bx::FastCoord, by::FastCoord)
+    oax = Float64(ax) - Float64(ox)
+    oay = Float64(ay) - Float64(oy)
+    abx = Float64(bx) - Float64(ax)
+    aby = Float64(by) - Float64(ay)
     l = oax * aby
     r = oay * abx
     det = l - r
@@ -87,7 +95,7 @@ function fastturn(orientation::HullOrientation, o::P, a::P, b::P) where {P <: Un
 end
 # Other coordinate types (integers can overflow, exotic reals have their own
 # rounding behavior) always take the DoubleFloat path.
-fastturn(orientation::HullOrientation, o, a, b) = nothing
+fastturn(orientation::HullOrientation, ox, oy, ax, ay, bx, by) = nothing
 
 # colinear vectors will always yield `true`
 isorientedturn_vec(orientation::HullOrientation, oa, ob, ab) = isvalidturn(orientation, (cp, v1, v2, v3) -> true, oa, ob, ab)
