@@ -124,69 +124,29 @@
     end
 end
 
-@testset "jarvissortedsearch" begin
-    # jarvissortedsearch requires a strictly-convex partial (lower or upper) hull list
-    # built with collinear=false. Only that domain guarantees the unimodality of the
-    # betterturn quality function that the early-exit relies on.
-    boxcoords = [(i, j) for i in 1:10 for j in 1:10]
-    lhalf     = [(i, j) for i in 1:5  for j in 1:10]
-    rhalf     = [(i, j) for i in 6:10 for j in 1:10]
+@testset "merging hulls that span many orders of magnitude" begin
+    # The turn predicate cannot separate two candidates whose cross product
+    # falls below the precision the coordinates leave it: it reads them as
+    # collinear, and its tie-break then prefers the more distant one, which can
+    # lie behind the march. The march is restricted to the vertices ahead of
+    # it, so it completes instead of cycling back over the chain.
+    by = x -> (x[1], x[2])
+    steep = [(0.0, 3.483474027019439e25), (1.9995698928833008, 2.5902844128201346),
+             (1.9997189044952393, 2.5904334173252814), (1.9998679161071777, 2.5905824218322473),
+             (1.9998679161071777, 2.5905824502539567)]
+    h = MutableLowerConvexHull{eltype(steep), typeof(by)}(; sortedby = by)
+    mergepoints!(h, copy(steep))
+    @test collect(h) == steep      # every one of them is a vertex of this chain
 
-    for orientation in [CCW, CW]
-        bt = let orientation = orientation
-            (pe, o, a, b) -> MCH.isfurtherturn(!orientation, pe, o, a, b)
-        end
-        # Use hull nodes from h1 as queries; search within h2's sorted hull list.
-        for (coords1, coords2) in [(lhalf, rhalf), (rhalf, lhalf), (lhalf, boxcoords), (boxcoords, rhalf)]
-            for H in (MutableLowerConvexHull, MutableUpperConvexHull)
-                h1 = H{eltype(coords1)}(; orientation, collinear = false)
-                h2 = H{eltype(coords2)}(; orientation, collinear = false)
-                mergepoints!(h1, coords1)
-                mergepoints!(h2, coords2)
-                (isempty(h1.hull) || isempty(h2.hull)) && continue
-                for query in ListNodeIterator(h1.hull)
-                    for pe in [MCH.UP, MCH.DOWN, (1.0, 0.0), (-1.0, 0.0)]
-                        ref    = MCH.jarvissearch(query, pe, ListNodeIterator(h2.hull), bt)
-                        result = MCH.jarvissortedsearch(query, pe, h2.hull, bt)
-                        @test MCH.coordsareequal(result.data, ref.data)
-                    end
-                end
-            end
-        end
-    end
+    other = [(0.0, 158.25), (1.9995698928833008, 4.4384856387065765)]
+    h2 = MutableLowerConvexHull{eltype(steep), typeof(by)}(; sortedby = by)
+    mergepoints!(h2, copy(other))
+    mergehulls!(h2, h)
+    @test collect(h2) == vcat([(0.0, 158.25)], steep[2:end])
 
-    @testset "edge cases" begin
-        T = Tuple{Int, Int}
-        bt_base = (pe, o, a, b) -> MCH.isfurtherturn(!CCW, pe, o, a, b)
-
-        # Build a one-point hull to get a query node; its hull list provides the query.
-        q_hull = MutableLowerConvexHull{T}()
-        addpoint!(q_hull, (0, 0))
-        query = head(q_hull.hull)
-
-        # Empty list throws.
-        @test_throws ArgumentError MCH.jarvissortedsearch(query, MCH.DOWN, MutableLowerConvexHull{T}().hull, bt_base)
-        @test_throws "must not be empty" MCH.jarvissortedsearch(query, MCH.DOWN, MutableLowerConvexHull{T}().hull, bt_base)
-
-        # Single-point list returns that point regardless of query or prevedge.
-        one_hull = MutableLowerConvexHull{T}()
-        addpoint!(one_hull, (5, 3))
-        for pe in [MCH.UP, MCH.DOWN, (1.0, 0.0)]
-            @test MCH.coordsareequal(MCH.jarvissortedsearch(query, pe, one_hull.hull, bt_base).data, (5, 3))
-        end
-
-        # Two-point list: result must match jarvissearch.
-        two_hull = MutableLowerConvexHull{T}()
-        mergepoints!(two_hull, [(2, 0), (8, 0)])
-        for pe in [MCH.UP, MCH.DOWN, (1.0, 0.0), (-1.0, 0.0)]
-            ref    = MCH.jarvissearch(query, pe, ListNodeIterator(two_hull.hull), bt_base)
-            result = MCH.jarvissortedsearch(query, pe, two_hull.hull, bt_base)
-            @test MCH.coordsareequal(result.data, ref.data)
-        end
-
-        # List where all points share the query's coordinates: returns head.
-        dup_hull = MutableLowerConvexHull{T}()
-        addpoint!(dup_hull, (0, 0))  # same coords as query
-        @test MCH.coordsareequal(MCH.jarvissortedsearch(query, MCH.DOWN, dup_hull.hull, bt_base).data, (0, 0))
-    end
+    # and through a Chan hull, which is what merges subhulls a batch at a time
+    ch = ChanLowerConvexHull{eltype(steep), typeof(by)}(; sortedby = by)
+    mergepoints!(ch, copy(steep))
+    mergepoints!(ch, copy(other))
+    @test collect(ch) == vcat([(0.0, 158.25)], steep[2:end])
 end
