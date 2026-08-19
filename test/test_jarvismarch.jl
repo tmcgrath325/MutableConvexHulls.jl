@@ -123,3 +123,30 @@
         end
     end
 end
+
+@testset "merging hulls that span many orders of magnitude" begin
+    # The turn predicate cannot separate two candidates whose cross product
+    # falls below the precision the coordinates leave it: it reads them as
+    # collinear, and its tie-break then prefers the more distant one, which can
+    # lie behind the march. The march is restricted to the vertices ahead of
+    # it, so it completes instead of cycling back over the chain.
+    by = x -> (x[1], x[2])
+    steep = [(0.0, 3.483474027019439e25), (1.9995698928833008, 2.5902844128201346),
+             (1.9997189044952393, 2.5904334173252814), (1.9998679161071777, 2.5905824218322473),
+             (1.9998679161071777, 2.5905824502539567)]
+    h = MutableLowerConvexHull{eltype(steep), typeof(by)}(; sortedby = by)
+    mergepoints!(h, copy(steep))
+    @test collect(h) == steep      # every one of them is a vertex of this chain
+
+    other = [(0.0, 158.25), (1.9995698928833008, 4.4384856387065765)]
+    h2 = MutableLowerConvexHull{eltype(steep), typeof(by)}(; sortedby = by)
+    mergepoints!(h2, copy(other))
+    mergehulls!(h2, h)
+    @test collect(h2) == vcat([(0.0, 158.25)], steep[2:end])
+
+    # and through a Chan hull, which is what merges subhulls a batch at a time
+    ch = ChanLowerConvexHull{eltype(steep), typeof(by)}(; sortedby = by)
+    mergepoints!(ch, copy(steep))
+    mergepoints!(ch, copy(other))
+    @test collect(ch) == vcat([(0.0, 158.25)], steep[2:end])
+end

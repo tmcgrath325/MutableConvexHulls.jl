@@ -221,6 +221,31 @@ end
     end
 end
 
+@testset "removepoint! removes the node it is given" begin
+    # Points equal in their first two coordinates are one point to the hull and
+    # distinct entities to the caller: the data may carry more than the hull
+    # reads. Removing one must remove that one, whichever of them holds the
+    # vertex.
+    pts = [(0.0, 0.0, 1), (0.0, 0.0, 2), (2.0, 0.0, 3), (2.0, 0.0, 4),
+           (1.0, 1.0, 5), (1.0, -1.0, 6), (1.0, 0.0, 7)]
+    for H in (MutableLowerConvexHull, MutableUpperConvexHull, MutableConvexHull)
+        @testset "$H" begin
+            for id in 1:length(pts)
+                h = H{eltype(pts)}()
+                mergepoints!(h, copy(pts))
+                node = MCH.getfirst(x -> x.data[3] == id, MCH.PointNodeIterator(h))
+                removepoint!(h, node)
+                ids = sort([n.data[3] for n in MCH.PointNodeIterator(h)])
+                @test ids == sort([p[3] for p in pts if p[3] != id])
+                # no vertex may still be reported as the point that left
+                @test !any(d -> d[3] == id, h)
+                # and every vertex must name a point the hull still holds
+                @test all(n -> n.target.data === n.data, MCH.HullNodeIterator(h))
+            end
+        end
+    end
+end
+
 @testset "mergepoints! Matrix input" begin
     coords = [(i, j) for i in 1:5 for j in 1:5]
     m = [p[k] for p in coords, k in 1:2]

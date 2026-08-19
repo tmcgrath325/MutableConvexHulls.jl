@@ -1,37 +1,10 @@
-# jarvissortedsearch is a potential optimization of jarvissearch that exploits the
-# sorted order of the hull list. It is not currently used (jarvissearch is used instead)
-# but is retained as a reference for future optimization work.
-#
-# function jarvissortedsearch(query::AbstractNode, prevedge, pointslist::AbstractLinkedList, betterturn::Function)
-#     pointslist.len == 0 && throw(ArgumentError("The list of points must not be empty."))
-#     pointslist.len == 1 && return head(pointslist)
-#     coordsareequal(head(pointslist).data, tail(pointslist).data) && throw(ArgumentError("All points in the list are duplicates."))
-#     # find nodes around the start of the list that are distinct from the query data
-#     prevnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=true))
-#     prevnode === nothing && return head(pointslist)
-#     currentnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(pointslist; rev=false))
-#     currentnode === prevnode && return currentnode
-#     nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-#     if nextnode === nothing
-#         return betterturn(prevedge, query.data, prevnode.data, currentnode.data) ? currentnode : prevnode
-#     end
-#     # initialize comparision with previous node
-#     prev_worse = !betterturn(prevedge, query.data, currentnode.data, prevnode.data)
-#
-#     while nextnode !== nothing
-#         # since points are sorted, the next point should present a "better turn" than the preceding or following points
-#         next_worse = !betterturn(prevedge, query.data, currentnode.data, nextnode.data)
-#         if prev_worse && next_worse
-#             return currentnode
-#         end
-#         prev_worse = !next_worse
-#         prevnode = currentnode
-#         currentnode = nextnode
-#         nextnode = getfirst(x -> !coordsareequal(query.data, x.data), ListNodeIterator(currentnode.next; rev=false))
-#     end
-#     return currentnode
-# end
-
+# The first node of `htarget` lying ahead of `key`, or its tail if none does.
+function aheadfrom(cursor::AbstractNode, sortedby::Function, key, rev::Bool)
+    while !attail(cursor) && !(rev ? sortedby(cursor.data) < key : sortedby(cursor.data) > key)
+        cursor = cursor.next
+    end
+    return cursor
+end
 
 """
     mergehulls!(hull, otherhulls...)
@@ -49,8 +22,6 @@ function mergehulls!(h::H, others::H...) where {H <: Union{MutableConvexHull, Mu
     # filter out empty hulls
     hulls = filter(x -> length(x.hull) > 0, [h, others...])
     length(hulls) == 0 && return h
-
-    targetscollinear = [hl.collinear for hl in hulls]
 
     # Set up copies of the hulls that point to the new points list
     hulltargets = [TargetedLinkedList(mergedpoints) for i in 1:length(hulls)]
@@ -78,7 +49,7 @@ function mergehulls!(h::H, others::H...) where {H <: Union{MutableConvexHull, Mu
     # merge the hull points into a new convex hull
     upper = H <: MutableUpperConvexHull
     partial = upper || H <: MutableLowerConvexHull
-    merge_hull_lists!(mergedhull, hulltargets, buildinreverse(h), h.orientation, h.collinear, h.sortedby, targetscollinear, partial, upper)
+    merge_hull_lists!(mergedhull, hulltargets, buildinreverse(h), h.orientation, h.collinear, h.sortedby, partial, upper)
     return h
 end
 """
@@ -90,7 +61,7 @@ in-place form.
 """
 mergehulls(h::H, others::H...) where {H <: Union{MutableConvexHull, MutableLowerConvexHull, MutableUpperConvexHull}} = mergehulls!(copy(h), others...)
 
-function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)
+function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, partial::Bool, upper::Bool)
     empty!(mergedhull) # start with an empty hull
     # handle simple cases
     isempty(hulltargets) && return empty!(mergedhull)
@@ -125,26 +96,33 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
     # prepare orientation test
     betterturn(prevedge, o, a, b) = collinear ? iscloserturn(!orientation, prevedge, o, a, b) : isfurtherturn(!orientation, prevedge, o, a, b)
 
-    # perform jarvis march with search that makes use of the sorted nature of the hulls
+    # perform jarvis march
     counter = 0
     current = start
     currentdata = current.data
     prevdata = currentdata
     candidates = [head(x) for x in hulltargets]
+    cursors = [head(x) for x in hulltargets]
     prevedge = upper ? UP : DOWN
     while counter == 0 || current !== stop
         if counter > maxlength
             throw(ErrorException("More points were added to the hull ($counter) than exist in the original hulls to be merged ($maxlength)."))
         end
         counter += 1
+        empty!(candidates)
+        key = sortedby(current.data)
         for (i, ht) in enumerate(hulltargets)
-            # candidates[i] = (current.list === ht &&                                 # If the current point belongs to the list being considered, we already know
-            #                  !(!collinear && targetscollinear[i])) ?                # its candidate point as long as it doesn't contain extraneous collinear points.
-            #     (attail(current.next) ? head(ht) : current.next) :                  # TODO: Ambiguous direction (when a subhull is entirely collinear) can cause issues
-            #     jarvissortedsearch(current, prevedge, ht, betterturn)
-            # candidates[i] = jarvissortedsearch(current, prevedge, ht, betterturn)
-            candidates[i] = jarvissearch(current, prevedge, ListNodeIterator(ht), betterturn)
+            if partial
+                cursors[i] = aheadfrom(cursors[i], sortedby, key, rev)
+                attail(cursors[i]) && continue          # this list holds nothing ahead
+                push!(candidates, jarvissearch(current, prevedge, ListNodeIterator(cursors[i]), betterturn))
+            else
+                # A full hull wraps around, so its march revisits keys it has
+                # passed and every vertex stays a candidate.
+                push!(candidates, jarvissearch(current, prevedge, ListNodeIterator(ht), betterturn))
+            end
         end
+        isempty(candidates) && break        # nothing lies ahead: the chain is complete
         next = jarvissearch(current, prevedge, candidates, betterturn)
         if coordsareequal(current.data, next.data)
             if length(mergedhull) == 1
@@ -167,8 +145,11 @@ function merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:Abstr
         current = next
     end
 
-    # if these are only partial convex hulls (i.e. upper or lower), add the stopping point at the end of the hull
-    if partial
+    # A partial hull (upper or lower) ends at its stopping point. The march
+    # reaches it only when something lies beyond the vertex it is on, so where
+    # every remaining point shares those coordinates the chain already ends
+    # there and appending it again would put two vertices on one point.
+    if partial && !coordsareequal(tail(mergedhull).data, stop.data)
         push!(mergedhull, stop.data)
         addtarget!(tail(mergedhull), stop.target)
     end
@@ -179,14 +160,13 @@ function merge_hull_lists!(h::AbstractChanConvexHull)
     mergedhull = h.hull
     hulltargets = filter(!isempty, [hl.hull for hl in h.subhulls])
     rev = buildinreverse(h.subhulls[1])
-    targetscollinear = fill(h.collinear, length(h.subhulls))
     upper = eltype(h.subhulls) <: MutableUpperConvexHull
     partial = upper || eltype(h.subhulls) <: MutableLowerConvexHull
-    merge_hull_lists!(mergedhull, hulltargets, rev, h.orientation, h.collinear, h.sortedby, targetscollinear, partial, upper)
+    merge_hull_lists!(mergedhull, hulltargets, rev, h.orientation, h.collinear, h.sortedby, partial, upper)
     return h
 end
 
-function fallback_merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, targetscollinear::Vector{Bool}, partial::Bool, upper::Bool)
+function fallback_merge_hull_lists!(mergedhull::AbstractList, hulltargets::Vector{<:AbstractList}, rev::Bool, orientation::HullOrientation, collinear::Bool, sortedby::Function, partial::Bool, upper::Bool)
     empty!(mergedhull)
     all_points_nodes = sort(collect(Iterators.flatten([n.target for n in ListNodeIterator(h; rev = rev)] for h in hulltargets)); by = x -> sortedby(x.data), rev = rev)
     return if !isempty(all_points_nodes)
@@ -208,9 +188,8 @@ function fallback_merge_hull_lists!(h::AbstractChanConvexHull)
     mergedhull = h.hull
     hulltargets = filter(!isempty, [hl.hull for hl in h.subhulls])
     rev = buildinreverse(h.subhulls[1])
-    targetscollinear = fill(h.collinear, length(h.subhulls))
     upper = eltype(h.subhulls) <: MutableUpperConvexHull
     partial = upper || eltype(h.subhulls) <: MutableLowerConvexHull
-    fallback_merge_hull_lists!(mergedhull, hulltargets, rev, h.orientation, h.collinear, h.sortedby, targetscollinear, partial, upper)
+    fallback_merge_hull_lists!(mergedhull, hulltargets, rev, h.orientation, h.collinear, h.sortedby, partial, upper)
     return h
 end

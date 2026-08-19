@@ -107,6 +107,27 @@ end
     end
 end
 
+@testset "chan removepoint! removes the node it is given" begin
+    # As for the regular hulls: coordinate-equal points are distinct entities,
+    # and a Chan hull must also stop reporting the removed one on the merged
+    # hull it rebuilds from its subhulls.
+    pts = [(Float64(i ÷ 2), Float64((i ÷ 2)^2), i) for i in 1:40]
+    for H in (ChanLowerConvexHull, ChanUpperConvexHull, ChanConvexHull)
+        @testset "$H" begin
+            for id in 1:length(pts)
+                h = H{eltype(pts)}()
+                mergepoints!(h, copy(pts))
+                node = MCH.getfirst(x -> x.data[3] == id,
+                                    Iterators.flatten(ListNodeIterator(sh.points) for sh in h.subhulls))
+                removepoint!(h, node)
+                ids = sort([n.data[3] for sh in h.subhulls for n in ListNodeIterator(sh.points)])
+                @test ids == sort([p[3] for p in pts if p[3] != id])
+                @test !any(d -> d[3] == id, h)
+            end
+        end
+    end
+end
+
 @testset "chan removepoint! by value and insidehull" begin
     boxcoords = [(i, j) for i in 1:10 for j in 1:10]
     coords = [boxcoords..., boxcoords...]   # include duplicate points

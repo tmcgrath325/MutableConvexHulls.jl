@@ -303,23 +303,26 @@ function removepoint!(h::AbstractConvexHull{T}, node::HullNode{T}) where {T}
     return h, updatedhull
 end
 
+# A neighbor that shares this node's coordinates and holds no vertex of its own.
+# The point list is sorted, so points with equal coordinates are adjacent.
+function duplicateneighbor(node::PointNode)
+    prev, next = node.prev, node.next
+    !athead(prev) && !hastarget(prev) && coordsareequal(prev.data, node.data) && return prev
+    !attail(next) && !hastarget(next) && coordsareequal(next.data, node.data) && return next
+    return nothing
+end
+
 function removepoint!(h::Union{MutableLowerConvexHull{T}, MutableUpperConvexHull{T}}, node::PointNode{T}) where {T}
     node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
     if hastarget(node)
-        # handle cases with duplicate data
-        next = node.next
-        prev = node.prev
-        if !athead(prev)
-            if coordsareequal(prev.data, node.data)
-                removepoint!(h, prev)
-                return h, false
-            end
-        end
-        if !attail(next)
-            if coordsareequal(next.data, node.data)
-                removepoint!(h, next)
-                return h, false
-            end
+        # A duplicate can be swapped in to avoid recomputing the hull
+        dup = duplicateneighbor(node)
+        if dup !== nothing
+            hullnode = node.target
+            deletenode!(node)
+            hullnode.data = dup.data
+            addtarget!(hullnode, dup)
+            return h, true
         end
         # handle general case
         target = node.target
@@ -341,20 +344,14 @@ end
 function removepoint!(h::MutableConvexHull{T}, node::PointNode{T}) where {T}
     node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
     if hastarget(node)
-        # handle cases with duplicate data
-        next = node.next
-        prev = node.prev
-        if !athead(prev)
-            if coordsareequal(prev.data, node.data)
-                removepoint!(h, prev)
-                return h, false
-            end
-        end
-        if !attail(next)
-            if coordsareequal(next.data, node.data)
-                removepoint!(h, next)
-                return h, false
-            end
+        # A duplicate can be swapped in to avoid recomputing the hull
+        dup = duplicateneighbor(node)
+        if dup !== nothing
+            hullnode = node.target
+            deletenode!(node)
+            hullnode.data = dup.data
+            addtarget!(hullnode, dup)
+            return h, true
         end
         # handle general case
         target = node.target
