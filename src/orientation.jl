@@ -52,30 +52,15 @@ function isvalidturn(orientation::HullOrientation, condition::Function, oa, ob, 
     return oriented && condition(cp, oa, ob, ab)
 end
 
-# Float64 fast path for the point-based turn predicates below. `fastturn`
-# evaluates cross2d(a - o, b - a) in Float64 and certifies its sign against a
-# bound on the worst-case rounding error: with unit roundoff u = eps()/2, each
-# coordinate difference carries relative error at most u and each product at
-# most 3u, so the absolute error stays below 4u * (|l| + |r|) up to O(u^2)
-# terms; the factor 8 * eps() = 16u leaves a 4x margin. A certified nonzero
-# sign decides every turn predicate outright, because their collinearity
-# conditions only apply when the cross product is exactly zero. Uncertain cases
-# (ties and near-ties) return `nothing` and must be recomputed with
-# DoubleFloats via `sub2d`.
+# Float64 fast path for the point-based turn decision
 const CROSSERRFACTOR = 8 * eps(Float64)
-# The relative-error analysis requires both products to be in the normal
-# range; below this floor one of them may be subnormal, voiding the bound, so
-# certification is refused.
 const CROSSNORMALFLOOR = 0x1p-1020
 
-# Like `sub2d`/`cross2d`, only elements 1 and 2 of a point are planar
-# coordinates; anything beyond is payload and is ignored, so the fast path
-# applies to payload-carrying points such as `(x, y, data)` tuples.
+# evaluates cross2d(a - o, b - a) in Float64 and certifies its sign against a
+# bound on the worst-case rounding error
 fastturn(orientation::HullOrientation, o, a, b) =
     fastturn(orientation, o[1], o[2], a[1], a[2], b[1], b[2])
 
-# Float32 converts to Float64 exactly, so certification remains valid for the
-# original coordinates.
 const FastCoord = Union{Float32, Float64}
 function fastturn(orientation::HullOrientation, ox::FastCoord, oy::FastCoord,
                   ax::FastCoord, ay::FastCoord, bx::FastCoord, by::FastCoord)

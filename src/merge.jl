@@ -1,18 +1,4 @@
 # The first node of `htarget` lying ahead of `key`, or its tail if none does.
-#
-# A partial hull's vertices ascend in `sortedby` (descend when built in
-# reverse), so only the nodes beyond the march's current key can be the next
-# one. Restricting the search to them is what keeps the march from doubling
-# back: where two candidates lie closer together than the arithmetic can
-# resolve — coordinates spanning many orders of magnitude leave the cross
-# product below the precision of even the extended-precision fallback — the
-# turn predicate reads them as collinear, and its tie-break among collinear
-# candidates prefers the more distant of the two, which may sit behind the
-# march.
-#
-# The march's key only ever advances, so each list is scanned from where its
-# last search left off and every node is passed over at most once across the
-# whole march.
 function aheadfrom(cursor::AbstractNode, sortedby::Function, key, rev::Bool)
     while !attail(cursor) && !(rev ? sortedby(cursor.data) < key : sortedby(cursor.data) > key)
         cursor = cursor.next
