@@ -315,10 +315,7 @@ end
 function removepoint!(h::Union{MutableLowerConvexHull{T}, MutableUpperConvexHull{T}}, node::PointNode{T}) where {T}
     node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
     if hastarget(node)
-        # A duplicate can hold this vertex in `node`'s place, sparing the chain
-        # a recomputation. The two are not interchangeable in the other
-        # direction: the caller named `node`, and data equal in coordinates may
-        # differ in whatever else it carries, so it is `node` that must leave.
+        # A duplicate can be swapped in to avoid recomputing the hull
         dup = duplicateneighbor(node)
         if dup !== nothing
             hullnode = node.target
@@ -347,10 +344,7 @@ end
 function removepoint!(h::MutableConvexHull{T}, node::PointNode{T}) where {T}
     node.list !== h.points && throw(ArgumentError("The specified node must belong to the provided convex hull"))
     if hastarget(node)
-        # A duplicate can hold this vertex in `node`'s place, sparing the chain
-        # a recomputation. The two are not interchangeable in the other
-        # direction: the caller named `node`, and data equal in coordinates may
-        # differ in whatever else it carries, so it is `node` that must leave.
+        # A duplicate can be swapped in to avoid recomputing the hull
         dup = duplicateneighbor(node)
         if dup !== nothing
             hullnode = node.target
